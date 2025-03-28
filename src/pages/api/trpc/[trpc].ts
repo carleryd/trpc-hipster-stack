@@ -21,14 +21,14 @@ const stravaTokenResponseSchema = z.object({
 
 const appRouter = router({
   getActivities: publicProcedure
-    .input(z.object({ accessToken: z.string() }))
-    .query(async ({ input: { accessToken } }) => {
+    .input(z.object({ stravaAccessToken: z.string() }))
+    .query(async ({ input: { stravaAccessToken } }) => {
       try {
         // TODO: We need to change the Bearer here!
         const stravaApi = new stravaSchema.Api({
           baseApiParams: {
             headers: {
-              Authorization: `Bearer ${accessToken}`,
+              Authorization: `Bearer ${stravaAccessToken}`,
             },
           },
         });
@@ -52,7 +52,7 @@ const appRouter = router({
         });
       }
     }),
-  getStravaAccessToken: publicProcedure
+  getStravaAuthToken: publicProcedure
     .input(z.object({ code: z.string() }))
     .query(async ({ input: { code } }) => {
       try {
@@ -65,8 +65,6 @@ const appRouter = router({
           code,
           grant_type: "authorization_code",
         }).toString();
-
-        console.log("################ START ##################");
 
         console.log("body", body);
 
@@ -96,18 +94,6 @@ const appRouter = router({
             message: "Invalid response from Strava",
           });
         }
-
-        // console.log(`
-        //   curl --location '${baseUrl + path}' \\
-        //     --header 'Content-Type: application/x-www-form-urlencoded' \\
-        //     --data-urlencode 'client_id=${ENV_VARS.STRAVA_CLIENT_ID}' \\
-        //     --data-urlencode 'client_secret=${ENV_VARS.STRAVA_CLIENT_SECRET}' \\
-        //     --data-urlencode 'code=${code}' \\
-        //     --data-urlencode 'grant_type=authorization_code'
-        //   `);
-
-        // console.log("res", res);
-        console.log("################ END ##################");
 
         return parsedJson.data;
       } catch (e) {

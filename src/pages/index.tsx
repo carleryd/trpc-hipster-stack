@@ -1,11 +1,11 @@
 /**
  * This is a Next.js page.
  */
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { trpc } from "../utils/trpc";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import { ENV_VARS } from "~/utils/env";
+import { useSearchParams } from "next/navigation";
 
 // TODO: Does this exist in the Strava API?
 const getStravaLoginUrl = ({
@@ -33,35 +33,31 @@ const getStravaLoginUrl = ({
   return url.toString();
 };
 
-const StravaAuthed = ({ accessToken }: { accessToken: string }) => {
-  const { data } = trpc.getActivities.useQuery({ accessToken });
+const ListActivities = ({
+  stravaAccessToken,
+}: {
+  stravaAccessToken: string;
+}) => {
+  const { data } = trpc.getActivities.useQuery({ stravaAccessToken });
 
-  console.log("StravaAuthed accessToken", data, accessToken);
+  console.log("ListActivities stravaAccessToken", data, stravaAccessToken);
 
   return <div>{JSON.stringify(data)}</div>;
-};
-
-const StravaStuff = ({ accessCode }: { accessCode: string }) => {
-  const { data } = trpc.getStravaAccessToken.useQuery({
-    code: accessCode,
-  });
-
-  console.log("StravaStuff data", data);
-  console.log("StravaStuff accessCode", accessCode);
-
-  return data && <StravaAuthed accessToken={data.access_token} />;
 };
 
 export default function IndexPage() {
   console.log("Rendering IndexPage");
   const [stravaLoginUrl, setStravaLoginUrl] = useState<string | null>(null);
   const searchParams = useSearchParams();
-  const stravaAccessCode = searchParams.get("code");
+  const stravaAccessToken = useMemo(
+    () => searchParams.get("stravaAccessToken"),
+    [searchParams],
+  );
 
   useEffect(() => {
     const url = getStravaLoginUrl({
       clientId: ENV_VARS.STRAVA_CLIENT_ID,
-      redirectUri: window.location.origin,
+      redirectUri: `${window.location.origin}/auth/strava/callback`,
       scope: "activity:read",
     });
 
@@ -71,7 +67,9 @@ export default function IndexPage() {
   return (
     <div>
       {stravaLoginUrl && <Link href={stravaLoginUrl}>Login</Link>}
-      {stravaAccessCode && <StravaStuff accessCode={stravaAccessCode} />}
+      {stravaAccessToken && (
+        <ListActivities stravaAccessToken={stravaAccessToken} />
+      )}
     </div>
   );
 }
