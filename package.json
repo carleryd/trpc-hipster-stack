@@ -5,7 +5,8 @@
     "dev": "next dev",
     "build": "next build",
     "lint": "eslint --cache src",
-    "start": "next start"
+    "start": "next start",
+    "generate-strava-api": "swagger-typescript-api generate -p https://developers.strava.com/swagger/swagger.json -o src/api -n stravaApi.ts"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.67.1",
@@ -14,6 +15,7 @@
     "@trpc/react-query": "npm:@trpc/react-query",
     "@trpc/server": "npm:@trpc/server",
     "next": "^15.1.7",
+    "next-auth": "^4.24.11",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "superjson": "^1.12.4",
@@ -23,7 +25,8 @@
     "@types/node": "^22.13.5",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
-    "eslint": "^9.21.0",
+    "eslint": "^9.23.0",
+    "swagger-typescript-api": "^13.0.28",
     "typescript": "^5.8.2"
   },
   "version": "11.0.0"

@@ -1,80 +1,79 @@
 /**
  * This is a Next.js page.
  */
-import React from 'react';
-import { trpc } from '../utils/trpc';
+import React, { useCallback, useEffect, useState } from "react";
+import { trpc } from "../utils/trpc";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { ENV_VARS } from "~/utils/env";
 
-function QueryExample() {
-  // 💡 Tip: CMD+Click (or CTRL+Click) on `greeting` to go to the server definition
-  const result = trpc.greeting.useQuery({ name: 'client' });
+// TODO: Does this exist in the Strava API?
+const getStravaLoginUrl = ({
+  clientId,
+  redirectUri,
+  scope,
+}: {
+  clientId: string;
+  redirectUri: string;
+  scope: "activity:read";
+}) => {
+  const baseUrl = "https://www.strava.com";
+  const path = "/oauth/authorize";
 
-  if (!result.data) {
-    return (
-      <div>
-        <p>Loading...</p>
-      </div>
-    );
-  }
-  return (
-    <div>
-      {/**
-       * The type is defined and can be autocompleted
-       * 💡 Tip: Hover over `data` to see the result type
-       * 💡 Tip: CMD+Click (or CTRL+Click) on `text` to go to the server definition
-       * 💡 Tip: Secondary click on `text` and "Rename Symbol" to rename it both on the client & server
-       */}
-      <p>{result.data.text}</p>
-    </div>
-  );
-}
+  const url = new URL(baseUrl + path);
 
-function SubscriptionExample() {
-  const subscription = trpc.loopData.useSubscription();
-  return (
-    <table>
-      <tr>
-        <th>Last data</th>
-        <td>{subscription.data?.data}</td>
-      </tr>
-      <tr>
-        <th>Last Event ID</th>
-        <td>{subscription.data?.id}</td>
-      </tr>
-      <tr>
-        <th>Status</th>
-        <td>
-          {subscription.status}
-          {subscription.status === 'error' && (
-            <div>
-              <button onClick={() => subscription.reset()}>Reset</button>
-            </div>
-          )}
-        </td>
-      </tr>
-    </table>
-  );
-}
+  url.searchParams.set("client_id", clientId);
+  url.searchParams.set("redirect_uri", redirectUri);
+  url.searchParams.set("response_type", "code");
+  url.searchParams.set("approval_prompt", "auto");
+  url.searchParams.set("scope", scope);
 
-let hasEverMounted = false;
+  console.log("### url", url.toString());
 
-function NoSSR(props: { children: React.ReactNode }) {
-  const [hasMounted, setHasMounted] = React.useState(hasEverMounted);
-  React.useEffect(() => {
-    hasEverMounted = true;
-    setHasMounted(true);
-  }, []);
-  return hasMounted ? <>{props.children}</> : null;
-}
+  return url.toString();
+};
+
+const StravaAuthed = ({ accessToken }: { accessToken: string }) => {
+  const { data } = trpc.getActivities.useQuery({ accessToken });
+
+  console.log("StravaAuthed accessToken", data, accessToken);
+
+  return <div>{JSON.stringify(data)}</div>;
+};
+
+const StravaStuff = ({ accessCode }: { accessCode: string }) => {
+  const { data } = trpc.getStravaAccessToken.useQuery({
+    code: accessCode,
+  });
+
+  console.log("StravaStuff data", data);
+  console.log("StravaStuff accessCode", accessCode);
+
+  return data && <StravaAuthed accessToken={data.access_token} />;
+
+  // return JSON.stringify(data);
+};
 
 export default function IndexPage() {
+  console.log("Rendering IndexPage");
+  const [stravaLoginUrl, setStravaLoginUrl] = useState<string | null>(null);
+  const searchParams = useSearchParams();
+  const stravaAccessCode = searchParams.get("code");
+
+  useEffect(() => {
+    const url = getStravaLoginUrl({
+      clientId: ENV_VARS.STRAVA_CLIENT_ID,
+      redirectUri: window.location.origin,
+      scope: "activity:read",
+    });
+
+    setStravaLoginUrl(url);
+  }, []);
+
   return (
     <div>
-      <h2>Query</h2>
-      <QueryExample />
-      <h2>Subscription</h2>
-      <NoSSR>
-        <SubscriptionExample />
-      </NoSSR>
+      {stravaLoginUrl && <Link href={stravaLoginUrl}>Login</Link>}
+      {stravaAccessCode && <StravaStuff accessCode={stravaAccessCode} />}
     </div>
   );
 }
