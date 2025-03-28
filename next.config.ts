@@ -1,4 +1,4 @@
-import { NextConfig } from 'next';
+import { NextConfig } from "next";
 
 export default {
   /** We run eslint as a separate task in CI */

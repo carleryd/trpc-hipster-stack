@@ -1,6 +1,6 @@
 import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/router";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { trpc } from "~/utils/trpc";
 
 const StravaAuthorization = ({
@@ -13,9 +13,6 @@ const StravaAuthorization = ({
   });
   const router = useRouter();
 
-  console.log("StravaAuthorization data", data);
-  console.log("StravaAuthorization accessCode", stravaAccessCode);
-
   useEffect(() => {
     if (data?.access_token) {
       // TODO: Handle page route definitions centrally
@@ -24,7 +21,7 @@ const StravaAuthorization = ({
         query: { stravaAccessToken: data.access_token },
       });
     }
-  }, [data, router]);
+  }, [data?.access_token, router]);
 
   if (isPending) {
     return <div>Loading...</div>;
@@ -35,10 +32,13 @@ const StravaAuthorization = ({
 
 export default () => {
   const searchParams = useSearchParams();
-  const stravaAccessCode = useMemo(
-    () => searchParams.get("code"),
-    [searchParams],
-  );
+  const [stravaAccessCode, setStravaAccessCode] = useState<string | null>(null);
+
+  useEffect(() => {
+    const stravaAccessCode = searchParams.get("code");
+
+    setStravaAccessCode(stravaAccessCode);
+  }, []);
 
   return stravaAccessCode ? (
     <StravaAuthorization stravaAccessCode={stravaAccessCode} />
