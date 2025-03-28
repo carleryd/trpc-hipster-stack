@@ -35,10 +35,21 @@ const appRouter = router({
 
         const res = await stravaApi.athlete.getLoggedInAthleteActivities();
 
-        return JSON.stringify(res);
+        if (!res.ok) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: res.statusText,
+          });
+        }
+
+        return res.data;
       } catch (e) {
-        console.error(e);
-        return JSON.stringify(e);
+        console.error("Error fetching activities:", e);
+
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: e instanceof Error ? e.message : "Unknown error",
+        });
       }
     }),
   getStravaAccessToken: publicProcedure

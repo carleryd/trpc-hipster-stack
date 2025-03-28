@@ -50,8 +50,6 @@ const StravaStuff = ({ accessCode }: { accessCode: string }) => {
   console.log("StravaStuff accessCode", accessCode);
 
   return data && <StravaAuthed accessToken={data.access_token} />;
-
-  // return JSON.stringify(data);
 };
 
 export default function IndexPage() {

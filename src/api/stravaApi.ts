@@ -10,6 +10,1099 @@
  * ---------------------------------------------------------------
  */
 
+export interface Error {
+  /** The code associated with this error. */
+  code?: string;
+  /** The specific field or aspect of the resource associated with this error. */
+  field?: string;
+  /** The type of resource associated with this error. */
+  resource?: string;
+}
+
+/** Encapsulates the errors that may be returned from the API. */
+export interface Fault {
+  /** The set of specific errors associated with this fault, if any. */
+  errors?: Error[];
+  /** The message of the fault. */
+  message?: string;
+}
+
+/** A roll-up of metrics pertaining to a set of activities. Values are in seconds and meters. */
+export interface ActivityTotal {
+  /** The number of activities considered in this total. */
+  count?: number;
+  /**
+   * The total distance covered by the considered activities.
+   * @format float
+   */
+  distance?: number;
+  /** The total moving time of the considered activities. */
+  moving_time?: number;
+  /** The total elapsed time of the considered activities. */
+  elapsed_time?: number;
+  /**
+   * The total elevation gain of the considered activities.
+   * @format float
+   */
+  elevation_gain?: number;
+  /** The total number of achievements of the considered activities. */
+  achievement_count?: number;
+}
+
+/** A set of rolled-up statistics and totals for an athlete */
+export interface ActivityStats {
+  /**
+   * The longest distance ridden by the athlete.
+   * @format double
+   */
+  biggest_ride_distance?: number;
+  /**
+   * The highest climb ridden by the athlete.
+   * @format double
+   */
+  biggest_climb_elevation_gain?: number;
+  /** The recent (last 4 weeks) ride stats for the athlete. */
+  recent_ride_totals?: ActivityTotal;
+  /** The recent (last 4 weeks) run stats for the athlete. */
+  recent_run_totals?: ActivityTotal;
+  /** The recent (last 4 weeks) swim stats for the athlete. */
+  recent_swim_totals?: ActivityTotal;
+  /** The year to date ride stats for the athlete. */
+  ytd_ride_totals?: ActivityTotal;
+  /** The year to date run stats for the athlete. */
+  ytd_run_totals?: ActivityTotal;
+  /** The year to date swim stats for the athlete. */
+  ytd_swim_totals?: ActivityTotal;
+  /** The all time ride stats for the athlete. */
+  all_ride_totals?: ActivityTotal;
+  /** The all time run stats for the athlete. */
+  all_run_totals?: ActivityTotal;
+  /** The all time swim stats for the athlete. */
+  all_swim_totals?: ActivityTotal;
+}
+
+export interface MetaAthlete {
+  /**
+   * The unique identifier of the athlete
+   * @format int64
+   */
+  id?: number;
+}
+
+export type SummaryAthlete = MetaAthlete & {
+  /** Resource state, indicates level of detail. Possible values: 1 -> "meta", 2 -> "summary", 3 -> "detail" */
+  resource_state?: number;
+  /** The athlete's first name. */
+  firstname?: string;
+  /** The athlete's last name. */
+  lastname?: string;
+  /** URL to a 62x62 pixel profile picture. */
+  profile_medium?: string;
+  /** URL to a 124x124 pixel profile picture. */
+  profile?: string;
+  /** The athlete's city. */
+  city?: string;
+  /** The athlete's state or geographical region. */
+  state?: string;
+  /** The athlete's country. */
+  country?: string;
+  /** The athlete's sex. */
+  sex?: "M" | "F";
+  /** Deprecated.  Use summit field instead. Whether the athlete has any Summit subscription. */
+  premium?: boolean;
+  /** Whether the athlete has any Summit subscription. */
+  summit?: boolean;
+  /**
+   * The time at which the athlete was created.
+   * @format date-time
+   */
+  created_at?: string;
+  /**
+   * The time at which the athlete was last updated.
+   * @format date-time
+   */
+  updated_at?: string;
+};
+
+export interface MetaClub {
+  /**
+   * The club's unique identifier.
+   * @format int64
+   */
+  id?: number;
+  /** Resource state, indicates level of detail. Possible values: 1 -> "meta", 2 -> "summary", 3 -> "detail" */
+  resource_state?: number;
+  /** The club's name. */
+  name?: string;
+}
+
+/** An enumeration of the types an activity may have. Note that this enumeration does not include new sport types (e.g. MountainBikeRide, EMountainBikeRide), activities with these sport types will have the corresponding activity type (e.g. Ride for MountainBikeRide, EBikeRide for EMountainBikeRide) */
+export enum ActivityType {
+  AlpineSki = "AlpineSki",
+  BackcountrySki = "BackcountrySki",
+  Canoeing = "Canoeing",
+  Crossfit = "Crossfit",
+  EBikeRide = "EBikeRide",
+  Elliptical = "Elliptical",
+  Golf = "Golf",
+  Handcycle = "Handcycle",
+  Hike = "Hike",
+  IceSkate = "IceSkate",
+  InlineSkate = "InlineSkate",
+  Kayaking = "Kayaking",
+  Kitesurf = "Kitesurf",
+  NordicSki = "NordicSki",
+  Ride = "Ride",
+  RockClimbing = "RockClimbing",
+  RollerSki = "RollerSki",
+  Rowing = "Rowing",
+  Run = "Run",
+  Sail = "Sail",
+  Skateboard = "Skateboard",
+  Snowboard = "Snowboard",
+  Snowshoe = "Snowshoe",
+  Soccer = "Soccer",
+  StairStepper = "StairStepper",
+  StandUpPaddling = "StandUpPaddling",
+  Surfing = "Surfing",
+  Swim = "Swim",
+  Velomobile = "Velomobile",
+  VirtualRide = "VirtualRide",
+  VirtualRun = "VirtualRun",
+  Walk = "Walk",
+  WeightTraining = "WeightTraining",
+  Wheelchair = "Wheelchair",
+  Windsurf = "Windsurf",
+  Workout = "Workout",
+  Yoga = "Yoga",
+}
+
+export type SummaryClub = MetaClub & {
+  /** URL to a 60x60 pixel profile picture. */
+  profile_medium?: string;
+  /** URL to a ~1185x580 pixel cover photo. */
+  cover_photo?: string;
+  /** URL to a ~360x176  pixel cover photo. */
+  cover_photo_small?: string;
+  /** Deprecated. Prefer to use activity_types. */
+  sport_type?: "cycling" | "running" | "triathlon" | "other";
+  /** The activity types that count for a club. This takes precedence over sport_type. */
+  activity_types?: ActivityType[];
+  /** The club's city. */
+  city?: string;
+  /** The club's state or geographical region. */
+  state?: string;
+  /** The club's country. */
+  country?: string;
+  /** Whether the club is private. */
+  private?: boolean;
+  /** The club's member count. */
+  member_count?: number;
+  /** Whether the club is featured or not. */
+  featured?: boolean;
+  /** Whether the club is verified or not. */
+  verified?: boolean;
+  /** The club's vanity URL. */
+  url?: string;
+};
+
+export interface SummaryGear {
+  /** The gear's unique identifier. */
+  id?: string;
+  /** Resource state, indicates level of detail. Possible values: 2 -> "summary", 3 -> "detail" */
+  resource_state?: number;
+  /** Whether this gear's is the owner's default one. */
+  primary?: boolean;
+  /** The gear's name. */
+  name?: string;
+  /**
+   * The distance logged with this gear.
+   * @format float
+   */
+  distance?: number;
+}
+
+export type DetailedAthlete = SummaryAthlete & {
+  /** The athlete's follower count. */
+  follower_count?: number;
+  /** The athlete's friend count. */
+  friend_count?: number;
+  /** The athlete's preferred unit system. */
+  measurement_preference?: "feet" | "meters";
+  /** The athlete's FTP (Functional Threshold Power). */
+  ftp?: number;
+  /**
+   * The athlete's weight.
+   * @format float
+   */
+  weight?: number;
+  /** The athlete's clubs. */
+  clubs?: SummaryClub[];
+  /** The athlete's bikes. */
+  bikes?: SummaryGear[];
+  /** The athlete's shoes. */
+  shoes?: SummaryGear[];
+};
+
+export interface ZoneRange {
+  /** The minimum value in the range. */
+  min?: number;
+  /** The maximum value in the range. */
+  max?: number;
+}
+
+export type ZoneRanges = ZoneRange[];
+
+export interface HeartRateZoneRanges {
+  /** Whether the athlete has set their own custom heart rate zones */
+  custom_zones?: boolean;
+  zones?: ZoneRanges;
+}
+
+export interface PowerZoneRanges {
+  zones?: ZoneRanges;
+}
+
+export interface Zones {
+  heart_rate?: HeartRateZoneRanges;
+  power?: PowerZoneRanges;
+}
+
+/**
+ * A pair of latitude/longitude coordinates, represented as an array of 2 floating point numbers.
+ * @maxItems 2
+ * @minItems 2
+ */
+export type LatLng = number[];
+
+export interface SummaryPRSegmentEffort {
+  /**
+   * The unique identifier of the activity related to the PR effort.
+   * @format int64
+   */
+  pr_activity_id?: number;
+  /** The elapsed time ot the PR effort. */
+  pr_elapsed_time?: number;
+  /**
+   * The time at which the PR effort was started.
+   * @format date-time
+   */
+  pr_date?: string;
+  /** Number of efforts by the authenticated athlete on this segment. */
+  effort_count?: number;
+}
+
+export interface SummarySegmentEffort {
+  /**
+   * The unique identifier of this effort
+   * @format int64
+   */
+  id?: number;
+  /**
+   * The unique identifier of the activity related to this effort
+   * @format int64
+   */
+  activity_id?: number;
+  /** The effort's elapsed time */
+  elapsed_time?: number;
+  /**
+   * The time at which the effort was started.
+   * @format date-time
+   */
+  start_date?: string;
+  /**
+   * The time at which the effort was started in the local timezone.
+   * @format date-time
+   */
+  start_date_local?: string;
+  /**
+   * The effort's distance in meters
+   * @format float
+   */
+  distance?: number;
+  /** Whether this effort is the current best on the leaderboard */
+  is_kom?: boolean;
+}
+
+export interface SummarySegment {
+  /**
+   * The unique identifier of this segment
+   * @format int64
+   */
+  id?: number;
+  /** The name of this segment */
+  name?: string;
+  activity_type?: "Ride" | "Run";
+  /**
+   * The segment's distance, in meters
+   * @format float
+   */
+  distance?: number;
+  /**
+   * The segment's average grade, in percents
+   * @format float
+   */
+  average_grade?: number;
+  /**
+   * The segments's maximum grade, in percents
+   * @format float
+   */
+  maximum_grade?: number;
+  /**
+   * The segments's highest elevation, in meters
+   * @format float
+   */
+  elevation_high?: number;
+  /**
+   * The segments's lowest elevation, in meters
+   * @format float
+   */
+  elevation_low?: number;
+  /** A pair of latitude/longitude coordinates, represented as an array of 2 floating point numbers. */
+  start_latlng?: LatLng;
+  /** A pair of latitude/longitude coordinates, represented as an array of 2 floating point numbers. */
+  end_latlng?: LatLng;
+  /** The category of the climb [0, 5]. Higher is harder ie. 5 is Hors catégorie, 0 is uncategorized in climb_category. */
+  climb_category?: number;
+  /** The segments's city. */
+  city?: string;
+  /** The segments's state or geographical region. */
+  state?: string;
+  /** The segment's country. */
+  country?: string;
+  /** Whether this segment is private. */
+  private?: boolean;
+  athlete_pr_effort?: SummaryPRSegmentEffort;
+  athlete_segment_stats?: SummarySegmentEffort;
+}
+
+export interface PolylineMap {
+  /** The identifier of the map */
+  id?: string;
+  /** The polyline of the map, only returned on detailed representation of an object */
+  polyline?: string;
+  /** The summary polyline of the map */
+  summary_polyline?: string;
+}
+
+export type DetailedSegment = SummarySegment & {
+  /**
+   * The time at which the segment was created.
+   * @format date-time
+   */
+  created_at?: string;
+  /**
+   * The time at which the segment was last updated.
+   * @format date-time
+   */
+  updated_at?: string;
+  /**
+   * The segment's total elevation gain.
+   * @format float
+   */
+  total_elevation_gain?: number;
+  map?: PolylineMap;
+  /** The total number of efforts for this segment */
+  effort_count?: number;
+  /** The number of unique athletes who have an effort for this segment */
+  athlete_count?: number;
+  /** Whether this segment is considered hazardous */
+  hazardous?: boolean;
+  /** The number of stars for this segment */
+  star_count?: number;
+};
+
+export interface MetaActivity {
+  /**
+   * The unique identifier of the activity
+   * @format int64
+   */
+  id?: number;
+}
+
+export type DetailedSegmentEffort = SummarySegmentEffort & {
+  /** The name of the segment on which this effort was performed */
+  name?: string;
+  activity?: MetaActivity;
+  athlete?: MetaAthlete;
+  /** The effort's moving time */
+  moving_time?: number;
+  /** The start index of this effort in its activity's stream */
+  start_index?: number;
+  /** The end index of this effort in its activity's stream */
+  end_index?: number;
+  /**
+   * The effort's average cadence
+   * @format float
+   */
+  average_cadence?: number;
+  /**
+   * The average wattage of this effort
+   * @format float
+   */
+  average_watts?: number;
+  /** For riding efforts, whether the wattage was reported by a dedicated recording device */
+  device_watts?: boolean;
+  /**
+   * The heart heart rate of the athlete during this effort
+   * @format float
+   */
+  average_heartrate?: number;
+  /**
+   * The maximum heart rate of the athlete during this effort
+   * @format float
+   */
+  max_heartrate?: number;
+  segment?: SummarySegment;
+  /**
+   * The rank of the effort on the global leaderboard if it belongs in the top 10 at the time of upload
+   * @min 1
+   * @max 10
+   */
+  kom_rank?: number;
+  /**
+   * The rank of the effort on the athlete's leaderboard if it belongs in the top 3 at the time of upload
+   * @min 1
+   * @max 3
+   */
+  pr_rank?: number;
+  /** Whether this effort should be hidden when viewed within an activity */
+  hidden?: boolean;
+};
+
+export interface ExplorerSegment {
+  /**
+   * The unique identifier of this segment
+   * @format int64
+   */
+  id?: number;
+  /** The name of this segment */
+  name?: string;
+  /**
+   * The category of the climb [0, 5]. Higher is harder ie. 5 is Hors catégorie, 0 is uncategorized in climb_category. If climb_category = 5, climb_category_desc = HC. If climb_category = 2, climb_category_desc = 3.
+   * @min 0
+   * @max 5
+   */
+  climb_category?: number;
+  /** The description for the category of the climb */
+  climb_category_desc?: "NC" | "4" | "3" | "2" | "1" | "HC";
+  /**
+   * The segment's average grade, in percents
+   * @format float
+   */
+  avg_grade?: number;
+  /** A pair of latitude/longitude coordinates, represented as an array of 2 floating point numbers. */
+  start_latlng?: LatLng;
+  /** A pair of latitude/longitude coordinates, represented as an array of 2 floating point numbers. */
+  end_latlng?: LatLng;
+  /**
+   * The segments's evelation difference, in meters
+   * @format float
+   */
+  elev_difference?: number;
+  /**
+   * The segment's distance, in meters
+   * @format float
+   */
+  distance?: number;
+  /** The polyline of the segment */
+  points?: string;
+}
+
+export interface ExplorerResponse {
+  /** The set of segments matching an explorer request */
+  segments?: ExplorerSegment[];
+}
+
+/** An enumeration of the sport types an activity may have. Distinct from ActivityType in that it has new types (e.g. MountainBikeRide) */
+export enum SportType {
+  AlpineSki = "AlpineSki",
+  BackcountrySki = "BackcountrySki",
+  Badminton = "Badminton",
+  Canoeing = "Canoeing",
+  Crossfit = "Crossfit",
+  EBikeRide = "EBikeRide",
+  Elliptical = "Elliptical",
+  EMountainBikeRide = "EMountainBikeRide",
+  Golf = "Golf",
+  GravelRide = "GravelRide",
+  Handcycle = "Handcycle",
+  HighIntensityIntervalTraining = "HighIntensityIntervalTraining",
+  Hike = "Hike",
+  IceSkate = "IceSkate",
+  InlineSkate = "InlineSkate",
+  Kayaking = "Kayaking",
+  Kitesurf = "Kitesurf",
+  MountainBikeRide = "MountainBikeRide",
+  NordicSki = "NordicSki",
+  Pickleball = "Pickleball",
+  Pilates = "Pilates",
+  Racquetball = "Racquetball",
+  Ride = "Ride",
+  RockClimbing = "RockClimbing",
+  RollerSki = "RollerSki",
+  Rowing = "Rowing",
+  Run = "Run",
+  Sail = "Sail",
+  Skateboard = "Skateboard",
+  Snowboard = "Snowboard",
+  Snowshoe = "Snowshoe",
+  Soccer = "Soccer",
+  Squash = "Squash",
+  StairStepper = "StairStepper",
+  StandUpPaddling = "StandUpPaddling",
+  Surfing = "Surfing",
+  Swim = "Swim",
+  TableTennis = "TableTennis",
+  Tennis = "Tennis",
+  TrailRun = "TrailRun",
+  Velomobile = "Velomobile",
+  VirtualRide = "VirtualRide",
+  VirtualRow = "VirtualRow",
+  VirtualRun = "VirtualRun",
+  Walk = "Walk",
+  WeightTraining = "WeightTraining",
+  Wheelchair = "Wheelchair",
+  Windsurf = "Windsurf",
+  Workout = "Workout",
+  Yoga = "Yoga",
+}
+
+export type SummaryActivity = MetaActivity & {
+  /** The identifier provided at upload time */
+  external_id?: string;
+  /**
+   * The identifier of the upload that resulted in this activity
+   * @format int64
+   */
+  upload_id?: number;
+  athlete?: MetaAthlete;
+  /** The name of the activity */
+  name?: string;
+  /**
+   * The activity's distance, in meters
+   * @format float
+   */
+  distance?: number;
+  /** The activity's moving time, in seconds */
+  moving_time?: number;
+  /** The activity's elapsed time, in seconds */
+  elapsed_time?: number;
+  /**
+   * The activity's total elevation gain.
+   * @format float
+   */
+  total_elevation_gain?: number;
+  /**
+   * The activity's highest elevation, in meters
+   * @format float
+   */
+  elev_high?: number;
+  /**
+   * The activity's lowest elevation, in meters
+   * @format float
+   */
+  elev_low?: number;
+  /** Deprecated. Prefer to use sport_type */
+  type?: ActivityType;
+  /** An enumeration of the sport types an activity may have. Distinct from ActivityType in that it has new types (e.g. MountainBikeRide) */
+  sport_type?: SportType;
+  /**
+   * The time at which the activity was started.
+   * @format date-time
+   */
+  start_date?: string;
+  /**
+   * The time at which the activity was started in the local timezone.
+   * @format date-time
+   */
+  start_date_local?: string;
+  /** The timezone of the activity */
+  timezone?: string;
+  /** A pair of latitude/longitude coordinates, represented as an array of 2 floating point numbers. */
+  start_latlng?: LatLng;
+  /** A pair of latitude/longitude coordinates, represented as an array of 2 floating point numbers. */
+  end_latlng?: LatLng;
+  /** The number of achievements gained during this activity */
+  achievement_count?: number;
+  /** The number of kudos given for this activity */
+  kudos_count?: number;
+  /** The number of comments for this activity */
+  comment_count?: number;
+  /**
+   * The number of athletes for taking part in a group activity
+   * @min 1
+   */
+  athlete_count?: number;
+  /** The number of Instagram photos for this activity */
+  photo_count?: number;
+  /** The number of Instagram and Strava photos for this activity */
+  total_photo_count?: number;
+  map?: PolylineMap;
+  /** Whether this activity was recorded on a training machine */
+  trainer?: boolean;
+  /** Whether this activity is a commute */
+  commute?: boolean;
+  /** Whether this activity was created manually */
+  manual?: boolean;
+  /** Whether this activity is private */
+  private?: boolean;
+  /** Whether this activity is flagged */
+  flagged?: boolean;
+  /** The activity's workout type */
+  workout_type?: number;
+  /** The unique identifier of the upload in string format */
+  upload_id_str?: string;
+  /**
+   * The activity's average speed, in meters per second
+   * @format float
+   */
+  average_speed?: number;
+  /**
+   * The activity's max speed, in meters per second
+   * @format float
+   */
+  max_speed?: number;
+  /** Whether the logged-in athlete has kudoed this activity */
+  has_kudoed?: boolean;
+  /** Whether the activity is muted */
+  hide_from_home?: boolean;
+  /** The id of the gear for the activity */
+  gear_id?: string;
+  /**
+   * The total work done in kilojoules during this activity. Rides only
+   * @format float
+   */
+  kilojoules?: number;
+  /**
+   * Average power output in watts during this activity. Rides only
+   * @format float
+   */
+  average_watts?: number;
+  /** Whether the watts are from a power meter, false if estimated */
+  device_watts?: boolean;
+  /** Rides with power meter data only */
+  max_watts?: number;
+  /** Similar to Normalized Power. Rides with power meter data only */
+  weighted_average_watts?: number;
+};
+
+export interface PhotosSummary {
+  /** The number of photos */
+  count?: number;
+  primary?: {
+    /** @format int64 */
+    id?: number;
+    source?: number;
+    unique_id?: string;
+    urls?: Record<string, string>;
+  };
+}
+
+export interface Split {
+  /**
+   * The average speed of this split, in meters per second
+   * @format float
+   */
+  average_speed?: number;
+  /**
+   * The distance of this split, in meters
+   * @format float
+   */
+  distance?: number;
+  /** The elapsed time of this split, in seconds */
+  elapsed_time?: number;
+  /**
+   * The elevation difference of this split, in meters
+   * @format float
+   */
+  elevation_difference?: number;
+  /** The pacing zone of this split */
+  pace_zone?: number;
+  /** The moving time of this split, in seconds */
+  moving_time?: number;
+  /** N/A */
+  split?: number;
+}
+
+export interface Lap {
+  /**
+   * The unique identifier of this lap
+   * @format int64
+   */
+  id?: number;
+  activity?: MetaActivity;
+  athlete?: MetaAthlete;
+  /**
+   * The lap's average cadence
+   * @format float
+   */
+  average_cadence?: number;
+  /**
+   * The lap's average speed
+   * @format float
+   */
+  average_speed?: number;
+  /**
+   * The lap's distance, in meters
+   * @format float
+   */
+  distance?: number;
+  /** The lap's elapsed time, in seconds */
+  elapsed_time?: number;
+  /** The start index of this effort in its activity's stream */
+  start_index?: number;
+  /** The end index of this effort in its activity's stream */
+  end_index?: number;
+  /** The index of this lap in the activity it belongs to */
+  lap_index?: number;
+  /**
+   * The maximum speed of this lat, in meters per second
+   * @format float
+   */
+  max_speed?: number;
+  /** The lap's moving time, in seconds */
+  moving_time?: number;
+  /** The name of the lap */
+  name?: string;
+  /** The athlete's pace zone during this lap */
+  pace_zone?: number;
+  split?: number;
+  /**
+   * The time at which the lap was started.
+   * @format date-time
+   */
+  start_date?: string;
+  /**
+   * The time at which the lap was started in the local timezone.
+   * @format date-time
+   */
+  start_date_local?: string;
+  /**
+   * The elevation gain of this lap, in meters
+   * @format float
+   */
+  total_elevation_gain?: number;
+}
+
+export type DetailedActivity = SummaryActivity & {
+  /** The description of the activity */
+  description?: string;
+  photos?: PhotosSummary;
+  gear?: SummaryGear;
+  /**
+   * The number of kilocalories consumed during this activity
+   * @format float
+   */
+  calories?: number;
+  segment_efforts?: DetailedSegmentEffort[];
+  /** The name of the device used to record the activity */
+  device_name?: string;
+  /** The token used to embed a Strava activity */
+  embed_token?: string;
+  /** The splits of this activity in metric units (for runs) */
+  splits_metric?: Split[];
+  /** The splits of this activity in imperial units (for runs) */
+  splits_standard?: Split[];
+  laps?: Lap[];
+  best_efforts?: DetailedSegmentEffort[];
+};
+
+export interface UpdatableActivity {
+  /** Whether this activity is a commute */
+  commute?: boolean;
+  /** Whether this activity was recorded on a training machine */
+  trainer?: boolean;
+  /** Whether this activity is muted */
+  hide_from_home?: boolean;
+  /** The description of the activity */
+  description?: string;
+  /** The name of the activity */
+  name?: string;
+  /** Deprecated. Prefer to use sport_type. In a request where both type and sport_type are present, this field will be ignored */
+  type?: ActivityType;
+  /** An enumeration of the sport types an activity may have. Distinct from ActivityType in that it has new types (e.g. MountainBikeRide) */
+  sport_type?: SportType;
+  /** Identifier for the gear associated with the activity. ‘none’ clears gear from activity */
+  gear_id?: string;
+}
+
+/** A union type representing the time spent in a given zone. */
+export type TimedZoneRange = ZoneRange & {
+  /** The number of seconds spent in this zone */
+  time?: number;
+};
+
+/** Stores the exclusive ranges representing zones and the time spent in each. */
+export type TimedZoneDistribution = TimedZoneRange[];
+
+export interface ActivityZone {
+  score?: number;
+  /** Stores the exclusive ranges representing zones and the time spent in each. */
+  distribution_buckets?: TimedZoneDistribution;
+  type?: "heartrate" | "power";
+  sensor_based?: boolean;
+  points?: number;
+  custom_zones?: boolean;
+  max?: number;
+}
+
+export interface Comment {
+  /**
+   * The unique identifier of this comment
+   * @format int64
+   */
+  id?: number;
+  /**
+   * The identifier of the activity this comment is related to
+   * @format int64
+   */
+  activity_id?: number;
+  /** The content of the comment */
+  text?: string;
+  athlete?: SummaryAthlete;
+  /**
+   * The time at which this comment was created.
+   * @format date-time
+   */
+  created_at?: string;
+}
+
+export type DetailedClub = SummaryClub & {
+  /** The membership status of the logged-in athlete. */
+  membership?: "member" | "pending";
+  /** Whether the currently logged-in athlete is an administrator of this club. */
+  admin?: boolean;
+  /** Whether the currently logged-in athlete is the owner of this club. */
+  owner?: boolean;
+  /** The number of athletes in the club that the logged-in athlete follows. */
+  following_count?: number;
+};
+
+export interface ClubAthlete {
+  /** Resource state, indicates level of detail. Possible values: 1 -> "meta", 2 -> "summary", 3 -> "detail" */
+  resource_state?: number;
+  /** The athlete's first name. */
+  firstname?: string;
+  /** The athlete's last initial. */
+  lastname?: string;
+  /** The athlete's member status. */
+  member?: string;
+  /** Whether the athlete is a club admin. */
+  admin?: boolean;
+  /** Whether the athlete is club owner. */
+  owner?: boolean;
+}
+
+export interface ClubActivity {
+  athlete?: MetaAthlete;
+  /** The name of the activity */
+  name?: string;
+  /**
+   * The activity's distance, in meters
+   * @format float
+   */
+  distance?: number;
+  /** The activity's moving time, in seconds */
+  moving_time?: number;
+  /** The activity's elapsed time, in seconds */
+  elapsed_time?: number;
+  /**
+   * The activity's total elevation gain.
+   * @format float
+   */
+  total_elevation_gain?: number;
+  /** Deprecated. Prefer to use sport_type */
+  type?: ActivityType;
+  /** An enumeration of the sport types an activity may have. Distinct from ActivityType in that it has new types (e.g. MountainBikeRide) */
+  sport_type?: SportType;
+  /** The activity's workout type */
+  workout_type?: number;
+}
+
+export type DetailedGear = SummaryGear & {
+  /** The gear's brand name. */
+  brand_name?: string;
+  /** The gear's model name. */
+  model_name?: string;
+  /** The gear's frame type (bike only). */
+  frame_type?: number;
+  /** The gear's description. */
+  description?: string;
+};
+
+export interface Waypoint {
+  /** The location along the route that the waypoint is closest to */
+  latlng?: LatLng;
+  /** A location off of the route that the waypoint is (optional) */
+  target_latlng?: LatLng;
+  /**
+   * Categories that the waypoint belongs to
+   * @minItems 0
+   */
+  categories?: string[];
+  /** A title for the waypoint */
+  title?: string;
+  /** A description of the waypoint (optional) */
+  description?: string;
+  /** The number meters along the route that the waypoint is located */
+  distance_into_route?: number;
+}
+
+export interface Route {
+  athlete?: SummaryAthlete;
+  /** The description of the route */
+  description?: string;
+  /**
+   * The route's distance, in meters
+   * @format float
+   */
+  distance?: number;
+  /**
+   * The route's elevation gain.
+   * @format float
+   */
+  elevation_gain?: number;
+  /**
+   * The unique identifier of this route
+   * @format int64
+   */
+  id?: number;
+  /** The unique identifier of the route in string format */
+  id_str?: string;
+  map?: PolylineMap;
+  /** The name of this route */
+  name?: string;
+  /** Whether this route is private */
+  private?: boolean;
+  /** Whether this route is starred by the logged-in athlete */
+  starred?: boolean;
+  /** An epoch timestamp of when the route was created */
+  timestamp?: number;
+  /** This route's type (1 for ride, 2 for runs) */
+  type?: number;
+  /** This route's sub-type (1 for road, 2 for mountain bike, 3 for cross, 4 for trail, 5 for mixed) */
+  sub_type?: number;
+  /**
+   * The time at which the route was created
+   * @format date-time
+   */
+  created_at?: string;
+  /**
+   * The time at which the route was last updated
+   * @format date-time
+   */
+  updated_at?: string;
+  /** Estimated time in seconds for the authenticated athlete to complete route */
+  estimated_moving_time?: number;
+  /** The segments traversed by this route */
+  segments?: SummarySegment[];
+  /**
+   * The custom waypoints along this route
+   * @minItems 0
+   */
+  waypoints?: Waypoint[];
+}
+
+export interface Upload {
+  /**
+   * The unique identifier of the upload
+   * @format int64
+   */
+  id?: number;
+  /** The unique identifier of the upload in string format */
+  id_str?: string;
+  /** The external identifier of the upload */
+  external_id?: string;
+  /** The error associated with this upload */
+  error?: string;
+  /** The status of this upload */
+  status?: string;
+  /**
+   * The identifier of the activity this upload resulted into
+   * @format int64
+   */
+  activity_id?: number;
+}
+
+export interface BaseStream {
+  /** The number of data points in this stream */
+  original_size?: number;
+  /** The level of detail (sampling) in which this stream was returned */
+  resolution?: "low" | "medium" | "high";
+  /** The base series used in the case the stream was downsampled */
+  series_type?: "distance" | "time";
+}
+
+export type TimeStream = BaseStream & {
+  /** The sequence of time values for this stream, in seconds */
+  data?: number[];
+};
+
+export type DistanceStream = BaseStream & {
+  /** The sequence of distance values for this stream, in meters */
+  data?: number[];
+};
+
+export type LatLngStream = BaseStream & {
+  /** The sequence of lat/long values for this stream */
+  data?: LatLng[];
+};
+
+export type AltitudeStream = BaseStream & {
+  /** The sequence of altitude values for this stream, in meters */
+  data?: number[];
+};
+
+export type SmoothVelocityStream = BaseStream & {
+  /** The sequence of velocity values for this stream, in meters per second */
+  data?: number[];
+};
+
+export type HeartrateStream = BaseStream & {
+  /** The sequence of heart rate values for this stream, in beats per minute */
+  data?: number[];
+};
+
+export type CadenceStream = BaseStream & {
+  /** The sequence of cadence values for this stream, in rotations per minute */
+  data?: number[];
+};
+
+export type PowerStream = BaseStream & {
+  /** The sequence of power values for this stream, in watts */
+  data?: number[];
+};
+
+export type TemperatureStream = BaseStream & {
+  /** The sequence of temperature values for this stream, in celsius degrees */
+  data?: number[];
+};
+
+export type MovingStream = BaseStream & {
+  /** The sequence of moving values for this stream, as boolean values */
+  data?: boolean[];
+};
+
+export type SmoothGradeStream = BaseStream & {
+  /** The sequence of grade values for this stream, as percents of a grade */
+  data?: number[];
+};
+
+export interface StreamSet {
+  time?: TimeStream;
+  distance?: DistanceStream;
+  latlng?: LatLngStream;
+  altitude?: AltitudeStream;
+  velocity_smooth?: SmoothVelocityStream;
+  heartrate?: HeartrateStream;
+  cadence?: CadenceStream;
+  watts?: PowerStream;
+  temp?: TemperatureStream;
+  moving?: MovingStream;
+  grade_smooth?: SmoothGradeStream;
+}
+
 export type QueryParamsType = Record<string | number, any>;
 export type ResponseFormat = keyof Omit<Body, "body" | "bodyUsed">;
 
@@ -239,7 +1332,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     getStats: (id: number, params: RequestParams = {}) =>
-      this.request<any, any>({
+      this.request<ActivityStats, Fault>({
         path: `/athletes/${id}/stats`,
         method: "GET",
         secure: true,
@@ -269,7 +1362,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
       },
       params: RequestParams = {},
     ) =>
-      this.request<any[], any>({
+      this.request<Route[], Fault>({
         path: `/athletes/${id}/routes`,
         method: "GET",
         query: query,
@@ -289,7 +1382,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     getLoggedInAthlete: (params: RequestParams = {}) =>
-      this.request<any, any>({
+      this.request<DetailedAthlete, Fault>({
         path: `/athlete`,
         method: "GET",
         secure: true,
@@ -307,7 +1400,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     updateLoggedInAthlete: (weight: number, data?: any, params: RequestParams = {}) =>
-      this.request<any, any>({
+      this.request<DetailedAthlete, Fault>({
         path: `/athlete`,
         method: "PUT",
         body: data,
@@ -327,7 +1420,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     getLoggedInAthleteZones: (params: RequestParams = {}) =>
-      this.request<any, any>({
+      this.request<Zones, Fault>({
         path: `/athlete/zones`,
         method: "GET",
         secure: true,
@@ -360,7 +1453,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
       },
       params: RequestParams = {},
     ) =>
-      this.request<any[], any>({
+      this.request<SummaryActivity[], Fault>({
         path: `/athlete/activities`,
         method: "GET",
         query: query,
@@ -390,7 +1483,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
       },
       params: RequestParams = {},
     ) =>
-      this.request<any[], any>({
+      this.request<SummaryClub[], Fault>({
         path: `/athlete/clubs`,
         method: "GET",
         query: query,
@@ -410,7 +1503,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     getSegmentById: (id: number, params: RequestParams = {}) =>
-      this.request<any, any>({
+      this.request<DetailedSegment, Fault>({
         path: `/segments/${id}`,
         method: "GET",
         secure: true,
@@ -439,7 +1532,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
       },
       params: RequestParams = {},
     ) =>
-      this.request<any[], any>({
+      this.request<SummarySegment[], Fault>({
         path: `/segments/starred`,
         method: "GET",
         query: query,
@@ -468,7 +1561,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
       },
       params: RequestParams = {},
     ) =>
-      this.request<any, any>({
+      this.request<DetailedSegment, Fault>({
         path: `/segments/${id}/starred`,
         method: "PUT",
         body: data,
@@ -512,7 +1605,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
       },
       params: RequestParams = {},
     ) =>
-      this.request<any, any>({
+      this.request<ExplorerResponse, Fault>({
         path: `/segments/explore`,
         method: "GET",
         query: query,
@@ -546,7 +1639,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
       },
       params: RequestParams = {},
     ) =>
-      this.request<any, any>({
+      this.request<StreamSet, Fault>({
         path: `/segments/${id}/streams`,
         method: "GET",
         query: query,
@@ -587,7 +1680,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
       },
       params: RequestParams = {},
     ) =>
-      this.request<any[], any>({
+      this.request<DetailedSegmentEffort[], Fault>({
         path: `/segment_efforts`,
         method: "GET",
         query: query,
@@ -606,7 +1699,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     getSegmentEffortById: (id: number, params: RequestParams = {}) =>
-      this.request<any, any>({
+      this.request<DetailedSegmentEffort, Fault>({
         path: `/segment_efforts/${id}`,
         method: "GET",
         secure: true,
@@ -651,7 +1744,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
       },
       params: RequestParams = {},
     ) =>
-      this.request<any, any>({
+      this.request<StreamSet, Fault>({
         path: `/segment_efforts/${id}/streams`,
         method: "GET",
         query: query,
@@ -699,7 +1792,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
       },
       params: RequestParams = {},
     ) =>
-      this.request<any, any>({
+      this.request<DetailedActivity, Fault>({
         path: `/activities`,
         method: "POST",
         body: data,
@@ -726,7 +1819,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
       },
       params: RequestParams = {},
     ) =>
-      this.request<any, any>({
+      this.request<DetailedActivity, Fault>({
         path: `/activities/${id}`,
         method: "GET",
         query: query,
@@ -744,8 +1837,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request PUT:/activities/{id}
      * @secure
      */
-    updateActivityById: (id: number, body: any, params: RequestParams = {}) =>
-      this.request<any, any>({
+    updateActivityById: (id: number, body: UpdatableActivity, params: RequestParams = {}) =>
+      this.request<DetailedActivity, Fault>({
         path: `/activities/${id}`,
         method: "PUT",
         body: body,
@@ -765,7 +1858,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     getLapsByActivityId: (id: number, params: RequestParams = {}) =>
-      this.request<any[], any>({
+      this.request<Lap[], Fault>({
         path: `/activities/${id}/laps`,
         method: "GET",
         secure: true,
@@ -783,7 +1876,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     getZonesByActivityId: (id: number, params: RequestParams = {}) =>
-      this.request<any[], any>({
+      this.request<ActivityZone[], Fault>({
         path: `/activities/${id}/zones`,
         method: "GET",
         secure: true,
@@ -820,7 +1913,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
       },
       params: RequestParams = {},
     ) =>
-      this.request<any[], any>({
+      this.request<Comment[], Fault>({
         path: `/activities/${id}/comments`,
         method: "GET",
         query: query,
@@ -851,7 +1944,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
       },
       params: RequestParams = {},
     ) =>
-      this.request<any[], any>({
+      this.request<SummaryAthlete[], Fault>({
         path: `/activities/${id}/kudos`,
         method: "GET",
         query: query,
@@ -897,7 +1990,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
       },
       params: RequestParams = {},
     ) =>
-      this.request<any, any>({
+      this.request<StreamSet, Fault>({
         path: `/activities/${id}/streams`,
         method: "GET",
         query: query,
@@ -917,7 +2010,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     getClubById: (id: number, params: RequestParams = {}) =>
-      this.request<any, any>({
+      this.request<DetailedClub, Fault>({
         path: `/clubs/${id}`,
         method: "GET",
         secure: true,
@@ -947,7 +2040,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
       },
       params: RequestParams = {},
     ) =>
-      this.request<any[], any>({
+      this.request<ClubAthlete[], Fault>({
         path: `/clubs/${id}/members`,
         method: "GET",
         query: query,
@@ -978,7 +2071,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
       },
       params: RequestParams = {},
     ) =>
-      this.request<any[], any>({
+      this.request<SummaryAthlete[], Fault>({
         path: `/clubs/${id}/admins`,
         method: "GET",
         query: query,
@@ -1009,7 +2102,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
       },
       params: RequestParams = {},
     ) =>
-      this.request<any[], any>({
+      this.request<ClubActivity[], Fault>({
         path: `/clubs/${id}/activities`,
         method: "GET",
         query: query,
@@ -1029,7 +2122,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     getGearById: (id: string, params: RequestParams = {}) =>
-      this.request<any, any>({
+      this.request<DetailedGear, Fault>({
         path: `/gear/${id}`,
         method: "GET",
         secure: true,
@@ -1048,7 +2141,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     getRouteById: (id: number, params: RequestParams = {}) =>
-      this.request<any, any>({
+      this.request<Route, Fault>({
         path: `/routes/${id}`,
         method: "GET",
         secure: true,
@@ -1066,7 +2159,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     getRouteAsGpx: (id: number, params: RequestParams = {}) =>
-      this.request<File, any>({
+      this.request<File, Fault>({
         path: `/routes/${id}/export_gpx`,
         method: "GET",
         secure: true,
@@ -1083,7 +2176,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     getRouteAsTcx: (id: number, params: RequestParams = {}) =>
-      this.request<File, any>({
+      this.request<File, Fault>({
         path: `/routes/${id}/export_tcx`,
         method: "GET",
         secure: true,
@@ -1100,7 +2193,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     getRouteStreams: (id: number, params: RequestParams = {}) =>
-      this.request<any, any>({
+      this.request<StreamSet, Fault>({
         path: `/routes/${id}/streams`,
         method: "GET",
         secure: true,
@@ -1140,7 +2233,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
       },
       params: RequestParams = {},
     ) =>
-      this.request<any, any>({
+      this.request<Upload, Fault>({
         path: `/uploads`,
         method: "POST",
         body: data,
@@ -1160,7 +2253,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     getUploadById: (uploadId: number, params: RequestParams = {}) =>
-      this.request<any, any>({
+      this.request<Upload, Fault>({
         path: `/uploads/${uploadId}`,
         method: "GET",
         secure: true,

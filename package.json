@@ -6,7 +6,7 @@
     "build": "next build",
     "lint": "eslint --cache src",
     "start": "next start",
-    "generate-strava-api": "swagger-typescript-api generate -p https://developers.strava.com/swagger/swagger.json -o src/api -n stravaApi.ts"
+    "generate-strava-api": "npx @redocly/cli@1.34.0 bundle https://developers.strava.com/swagger/swagger.json strava-bundle.yaml && swagger-typescript-api generate -p strava-bundle.yaml -o src/api -n stravaApi.ts && rm strava-bundle.yaml"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.67.1",
