@@ -1,15 +1,10 @@
-/**
- * This is the API-handler of your app that contains all your API routes.
- * On a bigger app, you will probably want to split this file up into multiple files.
- */
-import * as trpcNext from "@trpc/server/adapters/next";
-import { publicProcedure, router } from "~/server/trpc";
 import { z } from "zod";
 import * as stravaSchema from "~/api/stravaApi";
 import { ENV_VARS } from "~/utils/env";
 import { TRPCError } from "@trpc/server";
+import { createTRPCRouter, publicProcedure } from "../init";
 
-console.log("ENV_VARS", ENV_VARS);
+export type AppRouter = typeof appRouter;
 
 const stravaTokenResponseSchema = z.object({
   token_type: z.string(),
@@ -19,7 +14,10 @@ const stravaTokenResponseSchema = z.object({
   refresh_token: z.string().optional(),
 });
 
-const appRouter = router({
+export const appRouter = createTRPCRouter({
+  test: publicProcedure.query(() => {
+    return "Hello world!";
+  }),
   getActivities: publicProcedure
     .input(z.object({ stravaAccessToken: z.string() }))
     .query(async ({ input: { stravaAccessToken } }) => {
@@ -105,14 +103,4 @@ const appRouter = router({
         });
       }
     }),
-});
-
-// export only the type definition of the API
-// None of the actual implementation is exposed to the client
-export type AppRouter = typeof appRouter;
-
-// export API handler
-export default trpcNext.createNextApiHandler({
-  router: appRouter,
-  createContext: () => ({ session: null }),
 });

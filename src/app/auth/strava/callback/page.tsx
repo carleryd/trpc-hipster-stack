@@ -1,25 +1,29 @@
+"use client";
+import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
-import { useRouter } from "next/router";
-import { useEffect, useMemo, useState } from "react";
-import { trpc } from "~/utils/trpc";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useTRPC } from "~/trpc/client";
 
 const StravaAuthorization = ({
   stravaAccessCode,
 }: {
   stravaAccessCode: string;
 }) => {
-  const { data, isPending } = trpc.getStravaAuthToken.useQuery({
-    code: stravaAccessCode,
-  });
+  const trpc = useTRPC();
+
+  const { data, isPending } = useQuery(
+    trpc.getStravaAuthToken.queryOptions({
+      code: stravaAccessCode,
+    }),
+  );
+
   const router = useRouter();
 
   useEffect(() => {
     if (data?.access_token) {
       // TODO: Handle page route definitions centrally
-      router.push({
-        pathname: "/",
-        query: { stravaAccessToken: data.access_token },
-      });
+      router.push(`/?stravaAccessToken=${data.access_token}`);
     }
   }, [data?.access_token, router]);
 

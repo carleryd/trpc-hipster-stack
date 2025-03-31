@@ -1,11 +1,10 @@
-/**
- * This is a Next.js page.
- */
+"use client";
 import React, { useEffect, useMemo, useState } from "react";
-import { trpc } from "../utils/trpc";
 import Link from "next/link";
 import { ENV_VARS } from "~/utils/env";
 import { useSearchParams } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
+import { useTRPC } from "~/trpc/client";
 
 // TODO: Does this exist in the Strava API?
 const getStravaLoginUrl = ({
@@ -38,14 +37,18 @@ const ListActivities = ({
 }: {
   stravaAccessToken: string;
 }) => {
-  const { data } = trpc.getActivities.useQuery({ stravaAccessToken });
+  const trpc = useTRPC();
+
+  const { data } = useQuery(
+    trpc.getActivities.queryOptions({ stravaAccessToken }),
+  );
 
   console.log("ListActivities stravaAccessToken", data, stravaAccessToken);
 
   return <div>{JSON.stringify(data)}</div>;
 };
 
-export default function IndexPage() {
+export const App = () => {
   console.log("Rendering IndexPage");
   const [stravaLoginUrl, setStravaLoginUrl] = useState<string | null>(null);
   const searchParams = useSearchParams();
@@ -53,6 +56,11 @@ export default function IndexPage() {
     () => searchParams.get("stravaAccessToken"),
     [searchParams],
   );
+
+  const trpc = useTRPC();
+  const { data } = useQuery(trpc.test.queryOptions());
+
+  console.log("trpc", trpc.test.queryOptions());
 
   useEffect(() => {
     const url = getStravaLoginUrl({
@@ -66,10 +74,11 @@ export default function IndexPage() {
 
   return (
     <div>
+      {JSON.stringify(data)}
       {stravaLoginUrl && <Link href={stravaLoginUrl}>Login</Link>}
       {stravaAccessToken && (
         <ListActivities stravaAccessToken={stravaAccessToken} />
       )}
     </div>
   );
-}
+};
