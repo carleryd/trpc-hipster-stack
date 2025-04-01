@@ -1,8 +1,10 @@
 import * as stravaSchema from "~/api/stravaApi";
-import { TRPCError } from "@trpc/server";
+import { inferRouterOutputs, TRPCError } from "@trpc/server";
 import { createTRPCRouter, baseProcedure, isStravaAuth } from "../init";
 
 export type AppRouter = typeof appRouter;
+
+export type AppRouterResponses = inferRouterOutputs<AppRouter>;
 
 export const appRouter = createTRPCRouter({
   test: baseProcedure.query(() => {
