@@ -5,22 +5,55 @@
  */
 import superjson from "superjson";
 import { initTRPC } from "@trpc/server";
-import type { CreateNextContextOptions } from "@trpc/server/adapters/next";
-import { getSession } from "next-auth/react";
+import { getServerSession, NextAuthOptions } from "next-auth";
+import StravaProvider from "next-auth/providers/strava";
+import { ENV_VARS } from "~/utils/env";
+import { getToken } from "next-auth/jwt";
+import { CreateNextContextOptions } from "@trpc/server/adapters/next";
+
+export const authOptions: NextAuthOptions = {
+  providers: [
+    StravaProvider({
+      clientId: ENV_VARS.STRAVA_CLIENT_ID,
+      clientSecret: ENV_VARS.STRAVA_CLIENT_SECRET,
+      authorization: {
+        params: {
+          approval_prompt: "auto",
+          scope: "activity:read",
+        },
+      },
+    }),
+  ],
+  callbacks: {
+    async jwt({ token, account }) {
+      console.log("### jwt", { token, account });
+      if (account) {
+        token.accessToken = account.access_token;
+      }
+      return token;
+    },
+  },
+  // session: {
+  //   strategy: "database",
+  // },
+};
 
 export const createContext = async (opts: CreateNextContextOptions) => {
-  const session = await getSession({ req: opts.req });
+  const session = await getServerSession(authOptions);
+  const token = await getToken({
+    req: opts.req,
+    secret: ENV_VARS.NEXTAUTH_SECRET,
+  });
 
   return {
     session,
+    token,
   };
 };
 
-// Avoid exporting the entire t-object
-// since it's not very descriptive.
-// For instance, the use of a t variable
-// is common in i18n libraries.
-const t = initTRPC.create({
+export type Context = Awaited<ReturnType<typeof createContext>>;
+
+const t = initTRPC.context<Context>().create({
   /**
    * @see https://trpc.io/docs/server/data-transformers
    */

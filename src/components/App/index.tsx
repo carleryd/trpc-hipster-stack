@@ -5,6 +5,7 @@ import { ENV_VARS } from "~/utils/env";
 import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { useTRPC } from "~/trpc/client";
+import { useSession } from "next-auth/react";
 
 // TODO: Does this exist in the Strava API?
 const getStravaLoginUrl = ({
@@ -32,53 +33,45 @@ const getStravaLoginUrl = ({
   return url.toString();
 };
 
-const ListActivities = ({
-  stravaAccessToken,
-}: {
-  stravaAccessToken: string;
-}) => {
+const ListActivities = () => {
   const trpc = useTRPC();
 
-  const { data } = useQuery(
-    trpc.getActivities.queryOptions({ stravaAccessToken }),
-  );
+  const { data } = useQuery(trpc.getActivities.queryOptions());
 
-  console.log("ListActivities stravaAccessToken", data, stravaAccessToken);
+  console.log("ListActivities stravaAccessToken", data);
 
   return <div>{JSON.stringify(data)}</div>;
 };
 
 export const App = () => {
   console.log("Rendering IndexPage");
-  const [stravaLoginUrl, setStravaLoginUrl] = useState<string | null>(null);
-  const searchParams = useSearchParams();
-  const stravaAccessToken = useMemo(
-    () => searchParams.get("stravaAccessToken"),
-    [searchParams],
-  );
+  // const [stravaLoginUrl, setStravaLoginUrl] = useState<string | null>(null);
+  // const searchParams = useSearchParams();
+  // const stravaAccessToken = useMemo(
+  //   () => searchParams.get("stravaAccessToken"),
+  //   [searchParams],
+  // );
+  const { data: session } = useSession();
+  console.log("session", session);
 
-  const trpc = useTRPC();
-  const { data } = useQuery(trpc.test.queryOptions());
+  // useEffect(() => {
+  //   const url = getStravaLoginUrl({
+  //     clientId: ENV_VARS.STRAVA_CLIENT_ID,
+  //     redirectUri: `${window.location.origin}/auth/strava/callback`,
+  //     scope: "activity:read",
+  //   });
 
-  console.log("trpc", trpc.test.queryOptions());
-
-  useEffect(() => {
-    const url = getStravaLoginUrl({
-      clientId: ENV_VARS.STRAVA_CLIENT_ID,
-      redirectUri: `${window.location.origin}/auth/strava/callback`,
-      scope: "activity:read",
-    });
-
-    setStravaLoginUrl(url);
-  }, []);
+  //   setStravaLoginUrl(url);
+  // }, []);
 
   return (
     <div>
-      {JSON.stringify(data)}
-      {stravaLoginUrl && <Link href={stravaLoginUrl}>Login</Link>}
-      {stravaAccessToken && (
-        <ListActivities stravaAccessToken={stravaAccessToken} />
+      {session?.user ? (
+        <Link href="/api/auth/signout">Sign out</Link>
+      ) : (
+        <Link href="/api/auth/signin">Sign in</Link>
       )}
+      {session?.user && <ListActivities />}
     </div>
   );
 };

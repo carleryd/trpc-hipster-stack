@@ -7,5 +7,6 @@ declare namespace NodeJS {
     STRAVA_ACCESS_TOKEN_DEV: string;
     STRAVA_ACCESS_TOKEN_PROD: string;
     STRAVA_SESSION_SECRET: string;
+    NEXTAUTH_SECRET: string;
   }
 }

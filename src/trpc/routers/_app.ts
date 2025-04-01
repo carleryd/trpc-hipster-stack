@@ -18,15 +18,24 @@ export const appRouter = createTRPCRouter({
   test: publicProcedure.query(() => {
     return "Hello world!";
   }),
-  getActivities: publicProcedure
-    .input(z.object({ stravaAccessToken: z.string() }))
-    .query(async ({ input: { stravaAccessToken } }) => {
+  getActivities: publicProcedure // TODO: Make protected if no token
+    // .input(z.object({ stravaAccessToken: z.string() }))
+    .query(async ({ ctx }) => {
+      if (!ctx.token?.accessToken) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "No access token",
+        });
+      }
+
       try {
         // TODO: We need to change the Bearer here!
+        // TODO: Get token from session
+        console.log("### Bearer ctx.token.accessToken", ctx.token.accessToken);
         const stravaApi = new stravaSchema.Api({
           baseApiParams: {
             headers: {
-              Authorization: `Bearer ${stravaAccessToken}`,
+              Authorization: `Bearer ${ctx.token.accessToken}`,
             },
           },
         });

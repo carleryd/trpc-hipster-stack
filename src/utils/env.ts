@@ -3,6 +3,7 @@ type EnvVars = {
   STRAVA_CLIENT_SECRET: string;
   STRAVA_ACCESS_TOKEN: string;
   STRAVA_SESSION_SECRET: string;
+  NEXTAUTH_SECRET: string;
 };
 
 export const ENV_VARS = {
@@ -19,4 +20,5 @@ export const ENV_VARS = {
   //   ? process.env.STRAVA_ACCESS_TOKEN_DEV
   //   : process.env.STRAVA_ACCESS_TOKEN_PROD,
   STRAVA_SESSION_SECRET: process.env.STRAVA_SESSION_SECRET,
+  NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
 } satisfies EnvVars;
