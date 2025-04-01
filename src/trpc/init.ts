@@ -4,7 +4,7 @@
  * @see https://github.com/blitz-js/superjson#recipes
  */
 import superjson from "superjson";
-import { initTRPC } from "@trpc/server";
+import { initTRPC, TRPCError } from "@trpc/server";
 import { getServerSession, NextAuthOptions } from "next-auth";
 import StravaProvider from "next-auth/providers/strava";
 import { ENV_VARS } from "~/utils/env";
@@ -47,7 +47,7 @@ export const createContext = async (opts: CreateNextContextOptions) => {
 
   return {
     session,
-    token,
+    stravaAccessToken: token?.accessToken,
   };
 };
 
@@ -63,4 +63,12 @@ const t = initTRPC.context<Context>().create({
 // Base router and procedure helpers
 export const createTRPCRouter = t.router;
 export const createCallerFactory = t.createCallerFactory;
-export const publicProcedure = t.procedure;
+export const baseProcedure = t.procedure;
+
+export const isStravaAuth = t.middleware(({ ctx, next }) => {
+  if (!(typeof ctx.stravaAccessToken === "string")) {
+    throw new TRPCError({ code: "UNAUTHORIZED", message: "No access token" });
+  }
+
+  return next({ ctx: { stravaAccessToken: ctx.stravaAccessToken } });
+});

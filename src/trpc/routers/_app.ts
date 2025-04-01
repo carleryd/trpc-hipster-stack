@@ -2,7 +2,7 @@ import { z } from "zod";
 import * as stravaSchema from "~/api/stravaApi";
 import { ENV_VARS } from "~/utils/env";
 import { TRPCError } from "@trpc/server";
-import { createTRPCRouter, publicProcedure } from "../init";
+import { createTRPCRouter, baseProcedure, isStravaAuth } from "../init";
 
 export type AppRouter = typeof appRouter;
 
@@ -15,51 +15,39 @@ const stravaTokenResponseSchema = z.object({
 });
 
 export const appRouter = createTRPCRouter({
-  test: publicProcedure.query(() => {
+  test: baseProcedure.query(() => {
     return "Hello world!";
   }),
-  getActivities: publicProcedure // TODO: Make protected if no token
-    // .input(z.object({ stravaAccessToken: z.string() }))
-    .query(async ({ ctx }) => {
-      if (!ctx.token?.accessToken) {
-        throw new TRPCError({
-          code: "UNAUTHORIZED",
-          message: "No access token",
-        });
-      }
-
-      try {
-        // TODO: We need to change the Bearer here!
-        // TODO: Get token from session
-        console.log("### Bearer ctx.token.accessToken", ctx.token.accessToken);
-        const stravaApi = new stravaSchema.Api({
-          baseApiParams: {
-            headers: {
-              Authorization: `Bearer ${ctx.token.accessToken}`,
-            },
+  getActivities: baseProcedure.use(isStravaAuth).query(async ({ ctx }) => {
+    try {
+      const stravaApi = new stravaSchema.Api({
+        baseApiParams: {
+          headers: {
+            Authorization: `Bearer ${ctx.stravaAccessToken}`,
           },
-        });
+        },
+      });
 
-        const res = await stravaApi.athlete.getLoggedInAthleteActivities();
+      const res = await stravaApi.athlete.getLoggedInAthleteActivities();
 
-        if (!res.ok) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: res.statusText,
-          });
-        }
-
-        return res.data;
-      } catch (e) {
-        console.error("Error fetching activities:", e);
-
+      if (!res.ok) {
         throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: e instanceof Error ? e.message : "Unknown error",
+          code: "BAD_REQUEST",
+          message: res.statusText,
         });
       }
-    }),
-  getStravaAuthToken: publicProcedure
+
+      return res.data;
+    } catch (e) {
+      console.error("Error fetching activities:", e);
+
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: e instanceof Error ? e.message : "Unknown error",
+      });
+    }
+  }),
+  getStravaAuthToken: baseProcedure
     .input(z.object({ code: z.string() }))
     .query(async ({ input: { code } }) => {
       try {
