@@ -5,13 +5,12 @@
  */
 import superjson from "superjson";
 import { initTRPC, TRPCError } from "@trpc/server";
-import { getServerSession, NextAuthOptions } from "next-auth";
+import NextAuth, { NextAuthConfig } from "next-auth";
 import StravaProvider from "next-auth/providers/strava";
 import { ENV_VARS } from "~/utils/env";
 import { getToken } from "next-auth/jwt";
-import { CreateNextContextOptions } from "@trpc/server/adapters/next";
 
-export const authOptions: NextAuthOptions = {
+export const authOptions: NextAuthConfig = {
   providers: [
     StravaProvider({
       clientId: ENV_VARS.STRAVA_CLIENT_ID,
@@ -38,12 +37,16 @@ export const authOptions: NextAuthOptions = {
   // },
 };
 
-export const createContext = async (opts: CreateNextContextOptions) => {
-  const session = await getServerSession(authOptions);
+export const { auth, handlers } = NextAuth(authOptions);
+
+export const createContext = async (opts: { req: Request }) => {
+  const session = await auth();
   const token = await getToken({
     req: opts.req,
     secret: ENV_VARS.NEXTAUTH_SECRET,
   });
+
+  console.log("### createContext", { session, token });
 
   return {
     session,

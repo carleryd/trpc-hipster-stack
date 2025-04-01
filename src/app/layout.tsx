@@ -1,13 +1,13 @@
-import { getServerSession } from "next-auth";
 import { SessionProvider } from "~/providers/SessionProvider";
 import { TRPCReactProvider } from "~/trpc/client";
+import { auth } from "~/trpc/init";
 
 export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const session = await getServerSession();
+  const session = await auth();
 
   console.log("root session", session);
 
