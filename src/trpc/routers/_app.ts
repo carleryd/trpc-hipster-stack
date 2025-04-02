@@ -1,4 +1,4 @@
-import * as stravaSchema from "~/api/stravaApi";
+import { getActivityStreams, getLoggedInAthleteActivities } from "~/api/strava";
 import { inferRouterOutputs, TRPCError } from "@trpc/server";
 import { createTRPCRouter, baseProcedure, isStravaAuth } from "../init";
 import { z } from "zod";
@@ -14,24 +14,21 @@ export const appRouter = createTRPCRouter({
   getActivities: baseProcedure.use(isStravaAuth).query(async ({ ctx }) => {
     try {
       console.log("### Bearer", ctx.stravaAccessToken);
-      const stravaApi = new stravaSchema.Api({
-        baseApiParams: {
-          headers: {
-            Authorization: `Bearer ${ctx.stravaAccessToken}`,
-          },
+
+      const { response, data } = await getLoggedInAthleteActivities({
+        headers: {
+          Authorization: `Bearer ${ctx.stravaAccessToken}`,
         },
       });
 
-      const res = await stravaApi.athlete.getLoggedInAthleteActivities();
-
-      if (!res.ok) {
+      if (!response.ok) {
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: res.statusText,
+          message: response.statusText,
         });
       }
 
-      return res.data;
+      return data;
     } catch (e) {
       console.error("Error fetching activities:", e);
 
@@ -59,34 +56,27 @@ export const appRouter = createTRPCRouter({
           });
         }
 
-        const stravaApi = new stravaSchema.Api({
-          baseApiParams: {
-            headers: {
-              Authorization: `Bearer ${ctx.stravaAccessToken}`,
-            },
+        const { data, response } = await getActivityStreams({
+          path: {
+            id: activityId,
+          },
+          query: {
+            keys: ["time", "distance", "latlng", "altitude", "velocity_smooth"],
+            key_by_type: true,
+          },
+          headers: {
+            Authorization: `Bearer ${ctx.stravaAccessToken}`,
           },
         });
 
-        const res = await stravaApi.activities.getActivityStreams(activityId, {
-          // @ts-ignore
-          keys: [
-            "time",
-            "distance",
-            "latlng",
-            "altitude",
-            "velocity_smooth",
-          ].join(","),
-          key_by_type: true,
-        });
-
-        if (!res.ok) {
+        if (!response.ok) {
           throw new TRPCError({
             code: "BAD_REQUEST",
-            message: res.statusText,
+            message: response.statusText,
           });
         }
 
-        return res.data;
+        return data;
       } catch (e) {
         console.error("Error fetching activities:", e);
 

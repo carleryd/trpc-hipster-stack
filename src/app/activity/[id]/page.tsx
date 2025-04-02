@@ -8,11 +8,11 @@ export default () => {
 
   const pathname = usePathname();
 
-  const [_start, _activity, activityId] = pathname.split("/");
+  const [_empty, _resource, activityId] = pathname.split("/");
 
   const { data } = useQuery(
     trpc.getActivityStream.queryOptions({ activityId: Number(activityId) }),
   );
 
-  return <>{JSON.stringify(data)}</>;
+  return <>{JSON.stringify(Object.keys(data || {}))}</>;
 };
