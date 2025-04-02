@@ -12,6 +12,7 @@ const ActivityItem = ({ activity }: { activity: Activity }) => {
   return (
     <li>
       {activity.name} {activity.distance}
+      <Link href={`/activity/${activity.id}`}>View</Link>
     </li>
   );
 };
