@@ -63,15 +63,16 @@ const t = initTRPC.context<Context>().create({
   // transformer: superjson,
 });
 
-// Base router and procedure helpers
-export const createTRPCRouter = t.router;
-export const createCallerFactory = t.createCallerFactory;
-export const baseProcedure = t.procedure;
-
-export const isStravaAuth = t.middleware(({ ctx, next }) => {
+const isStravaAuth = t.middleware(({ ctx, next }) => {
   if (!(typeof ctx.stravaAccessToken === "string")) {
     throw new TRPCError({ code: "UNAUTHORIZED", message: "No access token" });
   }
 
   return next({ ctx: { stravaAccessToken: ctx.stravaAccessToken } });
 });
+
+// Base router and procedure helpers
+export const createTRPCRouter = t.router;
+export const createCallerFactory = t.createCallerFactory;
+export const baseProcedure = t.procedure;
+export const stravaProcedure = t.procedure.use(isStravaAuth);

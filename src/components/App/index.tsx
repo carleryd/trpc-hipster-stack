@@ -1,12 +1,13 @@
 "use client";
-import React from "react";
+import React, { useEffect } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { useTRPC } from "~/trpc/client";
 import { useSession } from "next-auth/react";
 import { AppRouterResponses } from "~/trpc/routers/_app";
+import { Chart, ChartData } from "chart.js/auto";
 
-type Activity = AppRouterResponses["getActivities"][0];
+type Activity = NonNullable<AppRouterResponses["getActivities"]>[0];
 
 const ActivityItem = ({ activity }: { activity: Activity }) => {
   return (
@@ -17,24 +18,79 @@ const ActivityItem = ({ activity }: { activity: Activity }) => {
   );
 };
 
+const activityData2ChartData = (data: Activity[]): ChartData<"line"> => {
+  const labels: ChartData<"line">["labels"] = data.map(
+    (activity) => activity.start_date || "-",
+  );
+  const datasets: ChartData<"line">["datasets"] = [
+    {
+      label: "Distance",
+      data: data.map((activity) => activity.distance || 0),
+    },
+  ];
+
+  return {
+    labels,
+    datasets,
+  };
+};
+
+const ListStarredSegments = () => {
+  const trpc = useTRPC();
+
+  const { data } = useQuery(trpc.getStarredSegments.queryOptions());
+
+  return (
+    <div>
+      <h3>Starred segments</h3>
+      {data?.map((segment, i) => (
+        <div key={i}>
+          <h4>{segment.name}</h4>
+          <p>{segment.distance}</p>
+          <Link href={`/segment/${segment.id}`}>View</Link>
+        </div>
+      ))}
+    </div>
+  );
+};
+
 const ListActivities = () => {
   const trpc = useTRPC();
 
   const { data } = useQuery(trpc.getActivities.queryOptions());
 
-  console.log("ListActivities stravaAccessToken", data);
+  // console.log("ListActivities stravaAccessToken", data);
 
-  return (
-    <ul>
-      {data?.map((activity, i) => <ActivityItem key={i} activity={activity} />)}
-    </ul>
-  );
+  const ctx = document.getElementById("myChart") as HTMLCanvasElement | null;
+
+  useEffect(() => {
+    console.log("ctx", ctx);
+    if (ctx && data) {
+      console.log("ctx if", ctx);
+      new Chart(ctx, {
+        type: "line",
+        data: activityData2ChartData(data || []),
+        options: {
+          responsive: true,
+          interaction: {
+            intersect: false,
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+            },
+          },
+        },
+      });
+    }
+  }, [ctx, data]);
+
+  return null;
 };
+// {data?.map((activity, i) => <ActivityItem key={i} activity={activity} />)}
 
 export const App = () => {
-  console.log("Rendering IndexPage");
   const { data: session } = useSession();
-  console.log("session", session);
 
   return (
     <div>
@@ -43,7 +99,7 @@ export const App = () => {
       ) : (
         <Link href="/api/auth/signin">Sign in</Link>
       )}
-      {session?.user && <ListActivities />}
+      {session?.user && <ListStarredSegments />}
     </div>
   );
 };
