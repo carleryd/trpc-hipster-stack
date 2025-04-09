@@ -24,12 +24,47 @@ const RenderChart = ({
           },
           // stacked: false,
           scales: {
-            yLeft: {
+            yLeft1: {
               type: "linear",
               display: true,
               position: "left",
+
+              // grid line settings
+              grid: {
+                drawOnChartArea: false, // only want the grid lines for one axis to show up
+              },
             },
-            yRight: {
+            yLeft2: {
+              type: "linear",
+              display: true,
+              position: "left",
+
+              // grid line settings
+              grid: {
+                drawOnChartArea: false, // only want the grid lines for one axis to show up
+              },
+            },
+            yLeft3: {
+              type: "linear",
+              display: true,
+              position: "left",
+
+              // grid line settings
+              grid: {
+                drawOnChartArea: false, // only want the grid lines for one axis to show up
+              },
+            },
+            yRight1: {
+              type: "linear",
+              display: true,
+              position: "right",
+
+              // grid line settings
+              grid: {
+                drawOnChartArea: false, // only want the grid lines for one axis to show up
+              },
+            },
+            yRight2: {
               type: "linear",
               display: true,
               position: "right",
@@ -61,7 +96,7 @@ export const Chart = ({ chartData }: { chartData: ChartData<"line"> }) => {
       <canvas
         id="lineChart"
         ref={setCanvasRef}
-        width="400"
+        width="600"
         height="400"
       ></canvas>
       {canvasRef && <RenderChart chartRef={canvasRef} chartData={chartData} />}

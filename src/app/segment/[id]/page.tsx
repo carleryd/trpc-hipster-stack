@@ -30,6 +30,14 @@ const withRequiredValues = (segmentEfforts: SegmentEffort[]) =>
       (average_heartrate || 0) > 0 && (average_cadence || 0) > 0,
   );
 
+const DataSetLabel = {
+  cadence: "Cadence",
+  heartRate: "Heart Rate",
+  meterPerSecond: "pace (m / s)",
+  cadencePerPace: "cadence / pace",
+  meterPerHeartBeat: "m / heartbeat",
+};
+
 const segmentEfforts2LineChartData = (
   data: SegmentEffort[],
 ): ChartData<"line"> => {
@@ -37,14 +45,23 @@ const segmentEfforts2LineChartData = (
     activity.start_date ? new Date(activity.start_date).toDateString() : "-",
   );
 
-  const minPerKmList: (number | null)[] = data.map((activity) => {
+  const meterPerSecond: (number | null)[] = data.map((activity) => {
     const meters = activity.distance;
-    const time = activity.elapsed_time;
+    const seconds = activity.elapsed_time;
 
-    if (!meters || !time) return null;
+    if (!meters || !seconds) return null;
+
+    return meters / seconds;
+  });
+
+  const minPerKm: (number | null)[] = data.map((activity) => {
+    const meters = activity.distance;
+    const seconds = activity.elapsed_time;
+
+    if (!meters || !seconds) return null;
 
     const km = meters / 1000;
-    const minutes = time / 60;
+    const minutes = seconds / 60;
 
     return minutes / km;
   });
@@ -56,51 +73,56 @@ const segmentEfforts2LineChartData = (
   });
 
   const datasets: ChartData<"line">["datasets"] = [
-    // {
-    //   label: "Cadence",
-    //   data: data.map((activity) => Number(activity.average_cadence) * 2),
-    // },
     {
-      label: "Heart Rate",
-      yAxisID: "yLeft",
+      label: DataSetLabel.cadence,
+      data: data.map((activity) => Number(activity.average_cadence) * 2),
+      yAxisID: "yLeft1",
+    },
+    {
+      label: DataSetLabel.heartRate,
       data: data.map((activity) => activity.average_heartrate || 0),
+      yAxisID: "yLeft2",
     },
     // {
     //   label: "Distance (meters)",
     //   data: data.map((activity) => activity.distance || 0),
     // },
+    {
+      label: DataSetLabel.meterPerSecond,
+      yAxisID: "yLeft3",
+      data: meterPerSecond,
+    },
     // {
-    //   label: "Time (seconds)",
-    //   data: data.map((activity) => activity.elapsed_time || 0),
-    // },
-    // {
-    //   label: "min / km",
-    //   data: data.map((activity) => {
-    //     const meters = activity.distance || 0;
-    //     const time = activity.elapsed_time || 0;
-
-    //     const km = meters / 1000;
-    //     const minutes = time / 60;
-
-    //     return minutes / km;
-    //   }),
+    //   label: DataSetLabel.cadencePerPace,
+    //   // hidden: !dataSetVisibility.cadencePerPace,
+    //   yAxisID: "yLeft1",
+    //   data: zipWith(meterPerSecond, cadenceList, (pace, cadence) =>
+    //     pace && cadence ? { pace, cadence } : null,
+    //   )
+    //     .filter(
+    //       (item): item is { pace: number; cadence: number } => item !== null,
+    //     )
+    //     .map(({ pace, cadence }) => {
+    //       return cadence / pace;
+    //     }),
     // },
     {
-      label: "cadence / pace",
-      yAxisID: "yRight",
-      data: zipWith(minPerKmList, cadenceList, (pace, cadence) =>
-        pace && cadence ? { pace, cadence } : null,
+      label: "cadence / min / km",
+      yAxisID: "yRight1",
+      data: zipWith(minPerKm, cadenceList, (minPerKm, cadence) =>
+        minPerKm && cadence ? { minPerKm, cadence } : null,
       )
         .filter(
-          (item): item is { pace: number; cadence: number } => item !== null,
+          (item): item is { minPerKm: number; cadence: number } =>
+            item !== null,
         )
-        .map(({ pace, cadence }) => {
-          return cadence / pace;
+        .map(({ minPerKm, cadence }) => {
+          return cadence / minPerKm;
         }),
     },
     {
-      label: "m / heartbeat",
-      yAxisID: "yRight",
+      label: DataSetLabel.meterPerHeartBeat,
+      yAxisID: "yRight2",
       data: data.map((activity) => {
         const meters = activity.distance || 0;
         const heartrate = activity.average_heartrate || 0;
@@ -139,7 +161,7 @@ export default () => {
   return (
     <div>
       <h3>Segment Efforts</h3>
-      <h4>{data?.[0].name}</h4>
+      <h4>{data?.[0]?.name || "-"}</h4>
       <Chart chartData={chartData} />
     </div>
   );
