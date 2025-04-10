@@ -29,7 +29,7 @@ export const authOptions: NextAuthConfig = {
       },
     }),
   ],
-  // trustHost: true,
+  trustHost: true,
   callbacks: {
     async jwt({ token, account }) {
       console.log("### jwt", { token, account });
