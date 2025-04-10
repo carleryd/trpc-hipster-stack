@@ -21,6 +21,6 @@ export const ENV_VARS = {
   NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
   WEBSITE_URL:
     process.env.NODE_ENV === "development"
-      ? process.env.NEXT_PUBLIC_WEBSITE_URL_TEST_ACCOUNT
-      : process.env.NEXT_PUBLIC_WEBSITE_URL_MAIN_ACCOUNT,
+      ? process.env.NEXT_PUBLIC_WEBSITE_URL_TEST
+      : process.env.NEXT_PUBLIC_WEBSITE_URL_PROD,
 } satisfies EnvVars;
