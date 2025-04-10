@@ -7,14 +7,20 @@ import superjson from "superjson";
 import { initTRPC, TRPCError } from "@trpc/server";
 import NextAuth, { NextAuthConfig } from "next-auth";
 import StravaProvider from "next-auth/providers/strava";
-import { ENV_VARS } from "~/utils/env";
 import { getToken } from "next-auth/jwt";
+
+console.log(
+  "### env",
+  process.env.NEXT_PUBLIC_STRAVA_CLIENT_ID,
+  process.env.STRAVA_CLIENT_SECRET,
+  process.env.NEXTAUTH_SECRET,
+);
 
 export const authOptions: NextAuthConfig = {
   providers: [
     StravaProvider({
-      clientId: ENV_VARS.STRAVA_CLIENT_ID,
-      clientSecret: ENV_VARS.STRAVA_CLIENT_SECRET,
+      clientId: process.env.NEXT_PUBLIC_STRAVA_CLIENT_ID,
+      clientSecret: process.env.STRAVA_CLIENT_SECRET,
       authorization: {
         params: {
           approval_prompt: "auto",
@@ -23,7 +29,7 @@ export const authOptions: NextAuthConfig = {
       },
     }),
   ],
-  trustHost: true,
+  // trustHost: true,
   callbacks: {
     async jwt({ token, account }) {
       console.log("### jwt", { token, account });
@@ -44,7 +50,7 @@ export const createContext = async (opts: { req: Request }) => {
   const session = await auth();
   const token = await getToken({
     req: opts.req,
-    secret: ENV_VARS.NEXTAUTH_SECRET,
+    secret: process.env.NEXTAUTH_SECRET,
   });
 
   console.log("### createContext", { session, token });
