@@ -42,7 +42,7 @@ const ListStarredSegments = () => {
 
   return (
     <div>
-      <h3>Starred segments</h3>
+      <h3>Starred segments </h3>
       {data?.map((segment, i) => (
         <div key={i}>
           <h4>{segment.name}</h4>

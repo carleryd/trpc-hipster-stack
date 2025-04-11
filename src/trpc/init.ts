@@ -7,6 +7,7 @@ import { initTRPC, TRPCError } from "@trpc/server";
 import NextAuth, { NextAuthConfig } from "next-auth";
 import StravaProvider from "next-auth/providers/strava";
 import { getToken } from "next-auth/jwt";
+import { NextRequest } from "next/server";
 
 console.log(
   "### env",
@@ -45,19 +46,34 @@ export const authOptions: NextAuthConfig = {
 
 export const { auth, handlers } = NextAuth(authOptions);
 
-export const createContext = async (opts: { req: Request }) => {
+export const createContext = async (opts: { req: NextRequest }) => {
   const session = await auth();
-  const token = await getToken({
-    req: opts.req,
-    secret: process.env.NEXTAUTH_SECRET,
-  });
+  // console.log("### createContext secret", process.env.NEXTAUTH_SECRET);
 
-  console.log("### createContext", { session, token });
+  try {
+    const token = await getToken({
+      req: opts.req,
+      secret: process.env.NEXTAUTH_SECRET,
+      secureCookie: true,
+    });
 
-  return {
-    session,
-    stravaAccessToken: token?.accessToken,
-  };
+    console.log("### createContext token -", token);
+    console.log("### createContext session -", session);
+    console.log("### createContext req -", opts.req);
+    console.log("### createContext cookies -", opts.req.headers.get("cookie"));
+
+    return {
+      session,
+      stravaAccessToken: token?.accessToken,
+      // stravaAccessToken: "ac79ec202cb19e179e7abaf859715bcb1ef68838",
+    };
+  } catch (e) {
+    console.error("### createContext - Error creating context:", e);
+    return {
+      session,
+      stravaAccessToken: null,
+    };
+  }
 };
 
 export type Context = Awaited<ReturnType<typeof createContext>>;
@@ -70,7 +86,7 @@ const t = initTRPC.context<Context>().create({
 });
 
 const isStravaAuth = t.middleware(({ ctx, next }) => {
-  console.log("### isStravaAuth", ctx.stravaAccessToken);
+  console.log("### isStravaAuth", ctx);
   if (!(typeof ctx.stravaAccessToken === "string")) {
     throw new TRPCError({ code: "UNAUTHORIZED", message: "No access token" });
   }
