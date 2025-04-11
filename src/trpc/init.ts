@@ -3,7 +3,6 @@
  * Make sure to import this file rather than `superjson` directly.
  * @see https://github.com/blitz-js/superjson#recipes
  */
-import superjson from "superjson";
 import { initTRPC, TRPCError } from "@trpc/server";
 import NextAuth, { NextAuthConfig } from "next-auth";
 import StravaProvider from "next-auth/providers/strava";
@@ -71,6 +70,7 @@ const t = initTRPC.context<Context>().create({
 });
 
 const isStravaAuth = t.middleware(({ ctx, next }) => {
+  console.log("### isStravaAuth", ctx.stravaAccessToken);
   if (!(typeof ctx.stravaAccessToken === "string")) {
     throw new TRPCError({ code: "UNAUTHORIZED", message: "No access token" });
   }

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { useTRPC } from "~/trpc/client";
 import { useSession } from "next-auth/react";
-import { AppRouterResponses } from "~/trpc/routers/_app";
+import type { AppRouterResponses } from "~/trpc/routers/_app";
 import { Chart, ChartData } from "chart.js/auto";
 
 type Activity = NonNullable<AppRouterResponses["getActivities"]>[0];
