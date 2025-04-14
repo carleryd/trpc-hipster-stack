@@ -54,7 +54,7 @@ export const createContext = async (opts: { req: NextRequest }) => {
     const token = await getToken({
       req: opts.req,
       secret: process.env.NEXTAUTH_SECRET,
-      secureCookie: true,
+      secureCookie: process.env.NODE_ENV === "production",
     });
 
     console.log("### createContext token -", token);

@@ -3,7 +3,7 @@ import React, { useEffect } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { useTRPC } from "~/trpc/client";
-import { useSession } from "next-auth/react";
+import { signIn, signOut, useSession } from "next-auth/react";
 import type { AppRouterResponses } from "~/trpc/routers/_app";
 import { Chart, ChartData } from "chart.js/auto";
 
@@ -36,22 +36,29 @@ const activityData2ChartData = (data: Activity[]): ChartData<"line"> => {
 };
 
 const ListStarredSegments = () => {
-  const trpc = useTRPC();
+  try {
+    const trpc = useTRPC();
 
-  const { data } = useQuery(trpc.getStarredSegments.queryOptions());
+    console.log("### ListStarredSegments", trpc.getStarredSegments, trpc);
 
-  return (
-    <div>
-      <h3>Starred segments </h3>
-      {data?.map((segment, i) => (
-        <div key={i}>
-          <h4>{segment.name}</h4>
-          <p>{segment.distance}</p>
-          <Link href={`/segment/${segment.id}`}>View</Link>
-        </div>
-      ))}
-    </div>
-  );
+    const { data } = useQuery(trpc.getStarredSegments.queryOptions());
+
+    return (
+      <div>
+        <h3>Starred segments </h3>
+        {data?.map((segment, i) => (
+          <div key={i}>
+            <h4>{segment.name}</h4>
+            <p>{segment.distance}</p>
+            <Link href={`/segment/${segment.id}`}>View</Link>
+          </div>
+        ))}
+      </div>
+    );
+  } catch (e) {
+    console.error("Error fetching starred segments:", e);
+    return null;
+  }
 };
 
 const ListActivities = () => {
@@ -91,13 +98,14 @@ const ListActivities = () => {
 
 export const App = () => {
   const { data: session } = useSession();
+  console.log("### App session", session);
 
   return (
     <div>
       {session?.user ? (
-        <Link href="/api/auth/signout">Sign out</Link>
+        <button onClick={() => signOut()}>Sign out</button>
       ) : (
-        <Link href="/api/auth/signin">Sign in</Link>
+        <button onClick={() => signIn("strava")}>Sign in</button>
       )}
       {session?.user && <ListStarredSegments />}
     </div>

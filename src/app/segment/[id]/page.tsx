@@ -8,6 +8,7 @@ import { AppRouterResponses } from "~/trpc/routers/_app";
 import { RequireKeys } from "~/types/utils";
 import { pipe } from "fp-ts/lib/function";
 import { zipWith } from "fp-ts/lib/Array";
+import { uniqBy } from "lodash";
 
 type SegmentEffort = NonNullable<AppRouterResponses["getSegmentEfforts"]>[0];
 
@@ -30,6 +31,22 @@ const withRequiredValues = (segmentEfforts: SegmentEffort[]) =>
       (average_heartrate || 0) > 0 && (average_cadence || 0) > 0,
   );
 
+const noDuplicatesInSameDay = (segmentEfforts: SegmentEffort[]) =>
+  uniqBy(segmentEfforts, ({ start_date }) => {
+    if (!start_date) return null;
+
+    const dayInMs = 1000 * 60 * 60 * 24;
+    const day = Math.floor(new Date(start_date).getTime() / dayInMs);
+
+    console.log("### noDuplicatesInSameDay", day);
+
+    // TODO: See if I can fetch each segment data detailed when hovering
+    // display this in chart under main chart
+    // can heavily cache in Redis!
+
+    return day;
+  });
+
 const DataSetLabel = {
   cadence: "Cadence",
   heartRate: "Heart Rate",
@@ -44,6 +61,8 @@ const segmentEfforts2LineChartData = (
   const labels: ChartData<"line">["labels"] = data.map((activity) =>
     activity.start_date ? new Date(activity.start_date).toDateString() : "-",
   );
+
+  console.log("### segmentEfforts2LineChartData", data);
 
   const meterPerSecond: (number | null)[] = data.map((activity) => {
     const meters = activity.distance;
@@ -123,6 +142,7 @@ const segmentEfforts2LineChartData = (
     {
       label: DataSetLabel.meterPerHeartBeat,
       yAxisID: "yRight2",
+      hidden: true,
       data: data.map((activity) => {
         const meters = activity.distance || 0;
         const heartrate = activity.average_heartrate || 0;
@@ -155,6 +175,7 @@ export default () => {
     segmentEfforts,
     sortByAscDate,
     withRequiredValues,
+    noDuplicatesInSameDay,
     segmentEfforts2LineChartData,
   );
 
