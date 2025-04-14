@@ -1,11 +1,27 @@
 "use client";
 import React from "react";
 import Link from "next/link";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTRPC } from "~/trpc/client";
 import type { AppRouterResponses } from "~/trpc/routers/_app";
 import { ChartData } from "chart.js/auto";
-import { Checkbox, CircularProgress, Grid, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  Checkbox,
+  CircularProgress,
+  Grid,
+  ListItem,
+  Typography,
+} from "@mui/material";
+import { Chart } from "../Chart";
+import { pipe } from "fp-ts/lib/function";
+import {
+  activities2LineChartData,
+  ActivityDetailed,
+  sortByAscDate,
+  withRequiredValues,
+} from "~/utils/dataTransformation";
 
 type Activity = NonNullable<AppRouterResponses["getActivities"]>[0];
 
@@ -17,8 +33,17 @@ const ActivityItem = ({
   selected: boolean;
 }) => {
   const trpc = useTRPC();
+  const queryClient = useQueryClient();
+  const getActivitiesQueryKey = trpc.getSelectedActivityIds.pathKey();
 
-  const { mutate } = useMutation(trpc.setActivitySelection.mutationOptions());
+  const { mutate } = useMutation(
+    trpc.setSelectedActivity.mutationOptions({
+      onSuccess: () =>
+        queryClient.invalidateQueries({
+          queryKey: getActivitiesQueryKey,
+        }),
+    }),
+  );
   // Explicit constant required to get type narrowing into Checkbox onChange
   const activityId = activity.id;
 
@@ -27,35 +52,30 @@ const ActivityItem = ({
   }
 
   return (
-    <li>
-      {activity.name} {activity.distance}
-      <Link href={`/activity/${activityId}`}>View</Link>
-      <Checkbox
-        defaultChecked={selected}
-        onChange={(e) => {
-          console.log("### Checkbox", e.target.checked);
-          mutate({ activityId, selected: e.target.checked });
-        }}
-      />
-    </li>
+    <ListItem>
+      <Box display="flex" flexDirection="row">
+        <Box>
+          <Checkbox
+            defaultChecked={selected}
+            onChange={(e) => {
+              mutate({ activityId, selected: e.target.checked });
+            }}
+          />
+        </Box>
+        <Box>
+          <Typography variant="h6">{activity.name}</Typography>
+          <Typography variant="inherit">
+            Distance: {(activity.distance || 0) / 1000} km
+          </Typography>
+          <Typography variant="inherit">
+            {activity.start_date
+              ? new Date(activity.start_date).toDateString()
+              : "-"}
+          </Typography>
+        </Box>
+      </Box>
+    </ListItem>
   );
-};
-
-const activityData2ChartData = (data: Activity[]): ChartData<"line"> => {
-  const labels: ChartData<"line">["labels"] = data.map(
-    (activity) => activity.start_date || "-",
-  );
-  const datasets: ChartData<"line">["datasets"] = [
-    {
-      label: "Distance",
-      data: data.map((activity) => activity.distance || 0),
-    },
-  ];
-
-  return {
-    labels,
-    datasets,
-  };
 };
 
 const ListStarredSegments = () => {
@@ -93,8 +113,6 @@ const ListActivities = ({
     trpc.getSelectedActivityIds.queryOptions(),
   );
 
-  console.log("### ListActivities", selectedActivityIds);
-
   return (
     <Grid>
       {activities
@@ -118,17 +136,36 @@ const ListActivities = ({
 const SelectedActivitiesComparison = () => {
   const trpc = useTRPC();
 
-  const { data: selectedActivityIds } = useQuery(
+  const { data: selectedActivityIds, refetch } = useQuery(
     trpc.getSelectedActivityIds.queryOptions(),
+  );
+
+  const { data } = useQuery(trpc.getActivities.queryOptions());
+
+  const activities = (data || []) as ActivityDetailed[];
+
+  const selectedActivities = activities.filter((activity) =>
+    selectedActivityIds?.includes(String(activity.id)),
+  );
+
+  const chartData = pipe(
+    selectedActivities,
+    sortByAscDate,
+    withRequiredValues,
+    activities2LineChartData,
   );
 
   return (
     <Grid>
-      {selectedActivityIds?.map((activityId) => (
-        <Grid>
-          <Typography variant="h6">{activityId}</Typography>
-        </Grid>
-      ))}
+      <Button
+        onClick={() => {
+          console.log("### REFETCHING");
+          return refetch();
+        }}
+      >
+        Refresh
+      </Button>
+      <Chart chartData={chartData} />
     </Grid>
   );
 };
@@ -142,7 +179,7 @@ export const App = () => {
 
   return (
     <Grid container display="flex" flexDirection="row">
-      <Grid>
+      <Grid flex={1}>
         <Typography variant="h5">Activities</Typography>
         {isLoading ? (
           <CircularProgress />
@@ -152,7 +189,7 @@ export const App = () => {
           <Typography variant="h6">No activities found</Typography>
         )}
       </Grid>
-      <Grid>
+      <Grid flex={1}>
         <Typography variant="h5">Comparison</Typography>
         <SelectedActivitiesComparison />
       </Grid>

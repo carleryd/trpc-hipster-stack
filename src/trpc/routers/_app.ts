@@ -55,7 +55,7 @@ export const appRouter = createTRPCRouter({
       });
     }
   }),
-  setActivitySelection: stravaProcedure
+  setSelectedActivity: stravaProcedure
     .input(
       z.object({
         activityId: z.number(),
