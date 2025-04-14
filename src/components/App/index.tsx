@@ -3,9 +3,10 @@ import React, { useEffect } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { useTRPC } from "~/trpc/client";
-import { signIn, signOut, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import type { AppRouterResponses } from "~/trpc/routers/_app";
 import { Chart, ChartData } from "chart.js/auto";
+import { CircularProgress, Grid, Typography } from "@mui/material";
 
 type Activity = NonNullable<AppRouterResponses["getActivities"]>[0];
 
@@ -61,53 +62,39 @@ const ListStarredSegments = () => {
   }
 };
 
-const ListActivities = () => {
-  const trpc = useTRPC();
-
-  const { data } = useQuery(trpc.getActivities.queryOptions());
-
-  // console.log("ListActivities stravaAccessToken", data);
-
-  const ctx = document.getElementById("myChart") as HTMLCanvasElement | null;
-
-  useEffect(() => {
-    console.log("ctx", ctx);
-    if (ctx && data) {
-      console.log("ctx if", ctx);
-      new Chart(ctx, {
-        type: "line",
-        data: activityData2ChartData(data || []),
-        options: {
-          responsive: true,
-          interaction: {
-            intersect: false,
-          },
-          scales: {
-            y: {
-              beginAtZero: true,
-            },
-          },
-        },
-      });
-    }
-  }, [ctx, data]);
-
-  return null;
+const ListActivities = ({
+  activities,
+}: {
+  activities: NonNullable<AppRouterResponses["getActivities"]>;
+}) => {
+  return (
+    <Grid>
+      {activities.map((activity) => (
+        <Grid key={activity.id}>
+          <ActivityItem activity={activity} />
+        </Grid>
+      ))}
+    </Grid>
+  );
 };
-// {data?.map((activity, i) => <ActivityItem key={i} activity={activity} />)}
 
 export const App = () => {
-  const { data: session } = useSession();
-  console.log("### App session", session);
+  const trpc = useTRPC();
+
+  const { data: activitiesResponse, isLoading } = useQuery(
+    trpc.getActivities.queryOptions(),
+  );
 
   return (
-    <div>
-      {session?.user ? (
-        <button onClick={() => signOut()}>Sign out</button>
+    <Grid>
+      <Typography variant="h5">Activities</Typography>
+      {isLoading ? (
+        <CircularProgress />
+      ) : activitiesResponse ? (
+        <ListActivities activities={activitiesResponse} />
       ) : (
-        <button onClick={() => signIn("strava")}>Sign in</button>
+        <Typography variant="h6">No activities found</Typography>
       )}
-      {session?.user && <ListStarredSegments />}
-    </div>
+    </Grid>
   );
 };

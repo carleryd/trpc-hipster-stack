@@ -9,6 +9,7 @@ import { RequireKeys } from "~/types/utils";
 import { pipe } from "fp-ts/lib/function";
 import { zipWith } from "fp-ts/lib/Array";
 import { uniqBy } from "lodash";
+import { Grid } from "@mui/material";
 
 type SegmentEffort = NonNullable<AppRouterResponses["getSegmentEfforts"]>[0];
 
@@ -180,10 +181,12 @@ export default () => {
   );
 
   return (
-    <div>
+    <Grid>
       <h3>Segment Efforts</h3>
       <h4>{data?.[0]?.name || "-"}</h4>
-      <Chart chartData={chartData} />
-    </div>
+      <Grid maxWidth={800}>
+        <Chart chartData={chartData} />
+      </Grid>
+    </Grid>
   );
 };

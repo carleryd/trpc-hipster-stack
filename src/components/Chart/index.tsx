@@ -1,4 +1,9 @@
-import { Chart as ChartJs, ChartData } from "chart.js/auto";
+import {
+  Chart as ChartJs,
+  ChartData,
+  ChartEvent,
+  ActiveElement,
+} from "chart.js/auto";
 import { useEffect, useState } from "react";
 
 const RenderChart = ({
@@ -12,7 +17,6 @@ const RenderChart = ({
     let chart: ChartJs | null = null;
 
     if (chartRef && chartData) {
-      console.log("RenderChart", chartRef, chartData);
       chart = new ChartJs(chartRef, {
         type: "line",
         data: chartData,
@@ -21,6 +25,12 @@ const RenderChart = ({
           interaction: {
             mode: "index",
             intersect: false,
+          },
+          onClick: (event: ChartEvent, elements: ActiveElement[]) => {
+            console.log("### onClick", { event, elements });
+            const index = elements[0]?.index || 0;
+            const data = chartData.datasets[index];
+            console.log("### onClick data", data);
           },
           // stacked: false,
           scales: {

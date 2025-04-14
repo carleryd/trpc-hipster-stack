@@ -33,7 +33,11 @@ export const appRouter = createTRPCRouter({
         });
       }
 
-      return data;
+      const onlyRunningActivities = data?.filter(
+        (activity) => activity.type === "Run",
+      );
+
+      return onlyRunningActivities;
     } catch (e) {
       console.error("Error fetching activities:", e);
 
