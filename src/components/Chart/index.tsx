@@ -27,10 +27,8 @@ const RenderChart = ({
             intersect: false,
           },
           onClick: (event: ChartEvent, elements: ActiveElement[]) => {
-            console.log("### onClick", { event, elements });
             const index = elements[0]?.index || 0;
             const data = chartData.datasets[index];
-            console.log("### onClick data", data);
           },
           // stacked: false,
           scales: {

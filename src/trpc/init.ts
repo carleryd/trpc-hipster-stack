@@ -9,13 +9,6 @@ import StravaProvider from "next-auth/providers/strava";
 import { getToken } from "next-auth/jwt";
 import { NextRequest } from "next/server";
 
-console.log(
-  "### env",
-  process.env.NEXT_PUBLIC_STRAVA_CLIENT_ID,
-  process.env.STRAVA_CLIENT_SECRET,
-  process.env.NEXTAUTH_SECRET,
-);
-
 export const authOptions: NextAuthConfig = {
   providers: [
     StravaProvider({
@@ -32,7 +25,6 @@ export const authOptions: NextAuthConfig = {
   trustHost: true,
   callbacks: {
     async jwt({ token, account }) {
-      console.log("### jwt", { token, account });
       if (account) {
         token.accessToken = account.access_token;
       }
@@ -48,7 +40,6 @@ export const { auth, handlers } = NextAuth(authOptions);
 
 export const createContext = async (opts: { req: NextRequest }) => {
   const session = await auth();
-  // console.log("### createContext secret", process.env.NEXTAUTH_SECRET);
 
   try {
     const token = await getToken({
@@ -57,18 +48,11 @@ export const createContext = async (opts: { req: NextRequest }) => {
       secureCookie: process.env.NODE_ENV === "production",
     });
 
-    console.log("### createContext token -", token);
-    console.log("### createContext session -", session);
-    console.log("### createContext req -", opts.req);
-    console.log("### createContext cookies -", opts.req.headers.get("cookie"));
-
     return {
       session,
       stravaAccessToken: token?.accessToken,
-      // stravaAccessToken: "ac79ec202cb19e179e7abaf859715bcb1ef68838",
     };
   } catch (e) {
-    console.error("### createContext - Error creating context:", e);
     return {
       session,
       stravaAccessToken: null,
@@ -86,7 +70,6 @@ const t = initTRPC.context<Context>().create({
 });
 
 const isStravaAuth = t.middleware(({ ctx, next }) => {
-  console.log("### isStravaAuth", ctx);
   if (!(typeof ctx.stravaAccessToken === "string")) {
     throw new TRPCError({ code: "UNAUTHORIZED", message: "No access token" });
   }

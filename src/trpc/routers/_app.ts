@@ -7,10 +7,18 @@ import {
 import { inferRouterOutputs, TRPCError } from "@trpc/server";
 import { createTRPCRouter, baseProcedure, stravaProcedure } from "../init";
 import { z } from "zod";
+import { map, mapValues } from "lodash";
 
 export type AppRouter = typeof appRouter;
 
 export type AppRouterResponses = inferRouterOutputs<AppRouter>;
+
+// TODO: Persist in DB/Redis
+const selectedActivities: Record<string, boolean> = {};
+// const persistedActivities: Record<
+//   string,
+//   NonNullable<AppRouterResponses["getActivities"]>[0]
+// > = {};
 
 export const appRouter = createTRPCRouter({
   test: baseProcedure.query(() => {
@@ -41,6 +49,37 @@ export const appRouter = createTRPCRouter({
     } catch (e) {
       console.error("Error fetching activities:", e);
 
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: e instanceof Error ? e.message : "Unknown error",
+      });
+    }
+  }),
+  setActivitySelection: stravaProcedure
+    .input(
+      z.object({
+        activityId: z.number(),
+        selected: z.boolean(),
+      }),
+    )
+    .mutation(async ({ ctx, input: { activityId, selected } }) => {
+      selectedActivities[activityId] = selected;
+
+      console.log("### selectedActivities", selectedActivities);
+
+      return selectedActivities;
+    }),
+  getSelectedActivityIds: stravaProcedure.query(async ({ ctx }) => {
+    try {
+      const x = map(selectedActivities, (value, key) =>
+        value ? key : null,
+      ).filter((value) => value !== null);
+
+      console.log("### selectedActivityIds x", x);
+
+      return x;
+    } catch (e) {
+      console.error("Error fetching activities:", e);
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
         message: e instanceof Error ? e.message : "Unknown error",

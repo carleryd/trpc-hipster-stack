@@ -39,8 +39,6 @@ const noDuplicatesInSameDay = (segmentEfforts: SegmentEffort[]) =>
     const dayInMs = 1000 * 60 * 60 * 24;
     const day = Math.floor(new Date(start_date).getTime() / dayInMs);
 
-    console.log("### noDuplicatesInSameDay", day);
-
     // TODO: See if I can fetch each segment data detailed when hovering
     // display this in chart under main chart
     // can heavily cache in Redis!
@@ -62,8 +60,6 @@ const segmentEfforts2LineChartData = (
   const labels: ChartData<"line">["labels"] = data.map((activity) =>
     activity.start_date ? new Date(activity.start_date).toDateString() : "-",
   );
-
-  console.log("### segmentEfforts2LineChartData", data);
 
   const meterPerSecond: (number | null)[] = data.map((activity) => {
     const meters = activity.distance;

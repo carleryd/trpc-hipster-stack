@@ -1,20 +1,42 @@
 "use client";
-import React, { useEffect } from "react";
+import React from "react";
 import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useTRPC } from "~/trpc/client";
-import { useSession } from "next-auth/react";
 import type { AppRouterResponses } from "~/trpc/routers/_app";
-import { Chart, ChartData } from "chart.js/auto";
-import { CircularProgress, Grid, Typography } from "@mui/material";
+import { ChartData } from "chart.js/auto";
+import { Checkbox, CircularProgress, Grid, Typography } from "@mui/material";
 
 type Activity = NonNullable<AppRouterResponses["getActivities"]>[0];
 
-const ActivityItem = ({ activity }: { activity: Activity }) => {
+const ActivityItem = ({
+  activity,
+  selected,
+}: {
+  activity: Activity;
+  selected: boolean;
+}) => {
+  const trpc = useTRPC();
+
+  const { mutate } = useMutation(trpc.setActivitySelection.mutationOptions());
+  // Explicit constant required to get type narrowing into Checkbox onChange
+  const activityId = activity.id;
+
+  if (!activityId) {
+    throw new Error("Activity ID is missing");
+  }
+
   return (
     <li>
       {activity.name} {activity.distance}
-      <Link href={`/activity/${activity.id}`}>View</Link>
+      <Link href={`/activity/${activityId}`}>View</Link>
+      <Checkbox
+        defaultChecked={selected}
+        onChange={(e) => {
+          console.log("### Checkbox", e.target.checked);
+          mutate({ activityId, selected: e.target.checked });
+        }}
+      />
     </li>
   );
 };
@@ -39,8 +61,6 @@ const activityData2ChartData = (data: Activity[]): ChartData<"line"> => {
 const ListStarredSegments = () => {
   try {
     const trpc = useTRPC();
-
-    console.log("### ListStarredSegments", trpc.getStarredSegments, trpc);
 
     const { data } = useQuery(trpc.getStarredSegments.queryOptions());
 
@@ -67,11 +87,46 @@ const ListActivities = ({
 }: {
   activities: NonNullable<AppRouterResponses["getActivities"]>;
 }) => {
+  const trpc = useTRPC();
+
+  const { data: selectedActivityIds } = useQuery(
+    trpc.getSelectedActivityIds.queryOptions(),
+  );
+
+  console.log("### ListActivities", selectedActivityIds);
+
   return (
     <Grid>
-      {activities.map((activity) => (
-        <Grid key={activity.id}>
-          <ActivityItem activity={activity} />
+      {activities
+        .filter((activity): activity is { id: number } & Activity =>
+          Boolean(activity.id),
+        )
+        .map((activity) => (
+          <Grid key={activity.id}>
+            <ActivityItem
+              activity={activity}
+              selected={
+                selectedActivityIds?.includes(String(activity.id)) || false
+              }
+            />
+          </Grid>
+        ))}
+    </Grid>
+  );
+};
+
+const SelectedActivitiesComparison = () => {
+  const trpc = useTRPC();
+
+  const { data: selectedActivityIds } = useQuery(
+    trpc.getSelectedActivityIds.queryOptions(),
+  );
+
+  return (
+    <Grid>
+      {selectedActivityIds?.map((activityId) => (
+        <Grid>
+          <Typography variant="h6">{activityId}</Typography>
         </Grid>
       ))}
     </Grid>
@@ -86,15 +141,21 @@ export const App = () => {
   );
 
   return (
-    <Grid>
-      <Typography variant="h5">Activities</Typography>
-      {isLoading ? (
-        <CircularProgress />
-      ) : activitiesResponse ? (
-        <ListActivities activities={activitiesResponse} />
-      ) : (
-        <Typography variant="h6">No activities found</Typography>
-      )}
+    <Grid container display="flex" flexDirection="row">
+      <Grid>
+        <Typography variant="h5">Activities</Typography>
+        {isLoading ? (
+          <CircularProgress />
+        ) : activitiesResponse ? (
+          <ListActivities activities={activitiesResponse} />
+        ) : (
+          <Typography variant="h6">No activities found</Typography>
+        )}
+      </Grid>
+      <Grid>
+        <Typography variant="h5">Comparison</Typography>
+        <SelectedActivitiesComparison />
+      </Grid>
     </Grid>
   );
 };
