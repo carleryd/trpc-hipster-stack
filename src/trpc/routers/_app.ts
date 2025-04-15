@@ -5,9 +5,14 @@ import {
   getLoggedInAthleteStarredSegments,
 } from "~/api/strava";
 import { inferRouterOutputs, TRPCError } from "@trpc/server";
-import { createTRPCRouter, baseProcedure, stravaProcedure } from "../init";
+import {
+  createTRPCRouter,
+  baseProcedure,
+  stravaProcedure,
+  stravaClient,
+} from "../init";
 import { z } from "zod";
-import { map, mapValues } from "lodash";
+import { map } from "lodash";
 
 export type AppRouter = typeof appRouter;
 
@@ -28,16 +33,17 @@ export const appRouter = createTRPCRouter({
     try {
       console.log("### Bearer", ctx.stravaAccessToken);
 
-      const { response, data } = await getLoggedInAthleteActivities({
+      const { data, error } = await getLoggedInAthleteActivities({
+        client: stravaClient,
         headers: {
           Authorization: `Bearer ${ctx.stravaAccessToken}`,
         },
       });
 
-      if (!response.ok) {
+      if (error) {
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: response.statusText,
+          message: error.message,
         });
       }
 
@@ -103,7 +109,8 @@ export const appRouter = createTRPCRouter({
           });
         }
 
-        const { data, response } = await getActivityStreams({
+        const { data, error } = await getActivityStreams({
+          client: stravaClient,
           path: {
             id: activityId,
           },
@@ -116,10 +123,10 @@ export const appRouter = createTRPCRouter({
           },
         });
 
-        if (!response.ok) {
+        if (error) {
           throw new TRPCError({
             code: "BAD_REQUEST",
-            message: response.statusText,
+            message: error.message,
           });
         }
 
@@ -137,17 +144,18 @@ export const appRouter = createTRPCRouter({
     try {
       console.log("### Bearer", ctx.stravaAccessToken);
 
-      const { data, response } = await getLoggedInAthleteStarredSegments({
+      const { data, error } = await getLoggedInAthleteStarredSegments({
+        client: stravaClient,
         query: {},
         headers: {
           Authorization: `Bearer ${ctx.stravaAccessToken}`,
         },
       });
 
-      if (!response.ok) {
+      if (error) {
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: response.statusText,
+          message: error.message,
         });
       }
 
@@ -178,7 +186,8 @@ export const appRouter = createTRPCRouter({
           });
         }
 
-        const { data, response } = await getEffortsBySegmentId({
+        const { data, error } = await getEffortsBySegmentId({
+          client: stravaClient,
           query: {
             segment_id: segmentId,
           },
@@ -187,10 +196,10 @@ export const appRouter = createTRPCRouter({
           },
         });
 
-        if (!response.ok) {
+        if (error) {
           throw new TRPCError({
             code: "BAD_REQUEST",
-            message: response.statusText,
+            message: error.message,
           });
         }
 

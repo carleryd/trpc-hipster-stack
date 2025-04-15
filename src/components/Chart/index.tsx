@@ -56,6 +56,7 @@ const RenderChart = ({
               type: "linear",
               display: true,
               position: "left",
+              reverse: true,
 
               // grid line settings
               grid: {

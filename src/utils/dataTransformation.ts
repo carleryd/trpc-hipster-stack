@@ -34,6 +34,7 @@ const DataSetLabel = {
   cadence: "Cadence",
   heartRate: "Heart Rate",
   meterPerSecond: "pace (m / s)",
+  minPerKm: "pace (min / km)",
   cadencePerPace: "cadence / pace",
   meterPerHeartBeat: "m / heartbeat",
 };
@@ -88,9 +89,9 @@ export const activities2LineChartData = (
     //   data: data.map((activity) => activity.distance || 0),
     // },
     {
-      label: DataSetLabel.meterPerSecond,
+      label: DataSetLabel.minPerKm,
       yAxisID: "yLeft3",
-      data: meterPerSecond,
+      data: minPerKm,
     },
     // {
     //   label: DataSetLabel.cadencePerPace,
@@ -109,6 +110,7 @@ export const activities2LineChartData = (
     {
       label: "cadence / min / km",
       yAxisID: "yRight1",
+      hidden: true,
       data: zipWith(minPerKm, cadenceList, (minPerKm, cadence) =>
         minPerKm && cadence ? { minPerKm, cadence } : null,
       )

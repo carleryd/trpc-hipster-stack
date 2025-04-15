@@ -3,6 +3,12 @@ import { useQuery } from "@tanstack/react-query";
 import { usePathname } from "next/navigation";
 import { useTRPC } from "~/trpc/client";
 
+/**
+ * Activity analysis page
+ *
+ * Select activities to compare against
+ */
+
 export default () => {
   const trpc = useTRPC();
 

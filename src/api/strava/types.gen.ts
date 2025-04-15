@@ -2424,5 +2424,5 @@ export type GetRouteStreamsResponses = {
 export type GetRouteStreamsResponse = GetRouteStreamsResponses[keyof GetRouteStreamsResponses];
 
 export type ClientOptions = {
-    baseUrl: 'https://www.strava.com/api/v3' | (string & {});
+    baseURL: 'https://www.strava.com/api/v3' | (string & {});
 };
