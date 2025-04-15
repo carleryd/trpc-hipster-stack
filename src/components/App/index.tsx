@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useCallback } from "react";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTRPC } from "~/trpc/client";
@@ -12,6 +12,12 @@ import {
   CircularProgress,
   Grid,
   ListItem,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   Typography,
 } from "@mui/material";
 import { Chart } from "../Chart";
@@ -22,6 +28,8 @@ import {
   sortByAscDate,
   withRequiredValues,
 } from "~/utils/dataTransformation";
+import { formatStringNumberWithDecimalPrecision } from "~/utils/formatting";
+import { meterPerSecondToMinPerKm } from "~/utils/math";
 
 type Activity = NonNullable<AppRouterResponses["getActivities"]>[0];
 
@@ -108,28 +116,79 @@ const ListActivities = ({
   activities: NonNullable<AppRouterResponses["getActivities"]>;
 }) => {
   const trpc = useTRPC();
+  const queryClient = useQueryClient();
+  const getActivitiesQueryKey = trpc.getSelectedActivityIds.pathKey();
 
   const { data: selectedActivityIds } = useQuery(
     trpc.getSelectedActivityIds.queryOptions(),
   );
 
+  const { mutate } = useMutation(
+    trpc.setSelectedActivity.mutationOptions({
+      onSuccess: () =>
+        queryClient.invalidateQueries({
+          queryKey: getActivitiesQueryKey,
+        }),
+    }),
+  );
+
+  const isActivitySelected = useCallback(
+    (activityId: number) => selectedActivityIds?.includes(String(activityId)),
+    [selectedActivityIds],
+  );
+
   return (
-    <Grid>
-      {activities
-        .filter((activity): activity is { id: number } & Activity =>
-          Boolean(activity.id),
-        )
-        .map((activity) => (
-          <Grid key={activity.id}>
-            <ActivityItem
-              activity={activity}
-              selected={
-                selectedActivityIds?.includes(String(activity.id)) || false
-              }
-            />
-          </Grid>
-        ))}
-    </Grid>
+    <TableContainer>
+      <Table>
+        <TableHead>
+          <TableRow>
+            <TableCell>Name</TableCell>
+            <TableCell>Date</TableCell>
+            <TableCell>Distance (km)</TableCell>
+            <TableCell>Pace (min / km)</TableCell>
+            <TableCell>Compare</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {activities
+            .filter((activity): activity is { id: number } & Activity =>
+              Boolean(activity.id),
+            )
+            .map((activity) => (
+              <TableRow key={activity.id}>
+                <TableCell>{activity.name}</TableCell>
+                <TableCell>
+                  {activity.start_date
+                    ? new Date(activity.start_date).toLocaleDateString()
+                    : "-"}
+                </TableCell>
+                <TableCell>{(activity.distance || 0) / 1000}</TableCell>
+                <TableCell>
+                  {activity.average_speed
+                    ? pipe(
+                        activity.average_speed,
+                        meterPerSecondToMinPerKm,
+                        String,
+                        (str) => formatStringNumberWithDecimalPrecision(str, 2),
+                      )
+                    : "-"}
+                </TableCell>
+                <TableCell>
+                  <Checkbox
+                    checked={isActivitySelected(activity.id)}
+                    onChange={(e) => {
+                      mutate({
+                        activityId: activity.id,
+                        selected: e.target.checked,
+                      });
+                    }}
+                  />
+                </TableCell>
+              </TableRow>
+            ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
   );
 };
 

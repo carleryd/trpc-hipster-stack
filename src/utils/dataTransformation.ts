@@ -2,6 +2,7 @@ import { ChartData } from "chart.js";
 import { zipWith } from "lodash";
 import { AppRouterResponses } from "~/trpc/routers/_app";
 import { RequireKeys } from "~/types/utils";
+import { meterPerSecondToMinPerKm } from "./math";
 
 // TODO: Should this be NonNullable? Also create some tests for the endpoint perhaps? To validate these
 export type ActivityDetailed = NonNullable<
@@ -56,15 +57,9 @@ export const activities2LineChartData = (
   });
 
   const minPerKm: (number | null)[] = data.map((activity) => {
-    const meters = activity.distance;
-    const seconds = activity.elapsed_time;
+    const meterPerSecond = activity.average_speed;
 
-    if (!meters || !seconds) return null;
-
-    const km = meters / 1000;
-    const minutes = seconds / 60;
-
-    return minutes / km;
+    return meterPerSecond ? meterPerSecondToMinPerKm(meterPerSecond) : null;
   });
 
   const cadenceList: (number | null)[] = data.map((activity) => {
@@ -127,10 +122,11 @@ export const activities2LineChartData = (
       yAxisID: "yRight2",
       hidden: true,
       data: data.map((activity) => {
-        const meters = activity.distance || 0;
-        const heartrate = activity.average_heartrate || 0;
+        const meterPerSecond = activity.average_speed || 0;
+        const meterPerMinute = meterPerSecond * 60;
+        const heartratePerMinute = activity.average_heartrate || 0;
 
-        return meters / heartrate;
+        return meterPerMinute / heartratePerMinute;
       }),
     },
   ];
