@@ -13,7 +13,7 @@ services:
     working_dir: /app
     environment:
       - NODE_OPTIONS="--inspect=0.0.0.0:9229"
-      - VALKEY_HOST=valkey # ???
+      - VALKEY_HOST=valkey-db # ???
     command: npm run dev
     depends_on:
       - valkey-db

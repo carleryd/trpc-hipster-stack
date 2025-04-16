@@ -110,6 +110,32 @@ const ListStarredSegments = () => {
   }
 };
 
+const ActivityStreamDisplay = ({ activityId }: { activityId: number }) => {
+  const trpc = useTRPC();
+
+  const { data: activityStream, isLoading } = useQuery(
+    trpc.getActivityStream.queryOptions({
+      activityId,
+    }),
+  );
+
+  return (
+    <Grid>
+      {isLoading ? (
+        <CircularProgress size={5} />
+      ) : (
+        <>
+          <Typography variant="h6">Activity Stream for {activityId}</Typography>
+          <Typography variant="caption">
+            {Object.keys(activityStream || {})}
+            {activityStream?.distance?.data?.length}
+          </Typography>
+        </>
+      )}
+    </Grid>
+  );
+};
+
 const ListActivities = ({
   activities,
 }: {
@@ -137,58 +163,76 @@ const ListActivities = ({
     [selectedActivityIds],
   );
 
+  const [clickedActivityId, setClickedActivityId] = React.useState<
+    number | null
+  >(null);
+
+  const onClickActivity = useCallback((activityId: number) => {
+    console.log("### Clicked activity", activityId);
+
+    setClickedActivityId(activityId);
+  }, []);
+
   return (
-    <TableContainer>
-      <Table>
-        <TableHead>
-          <TableRow>
-            <TableCell>Name</TableCell>
-            <TableCell>Date</TableCell>
-            <TableCell>Distance (km)</TableCell>
-            <TableCell>Pace (min / km)</TableCell>
-            <TableCell>Compare</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {activities
-            .filter((activity): activity is { id: number } & Activity =>
-              Boolean(activity.id),
-            )
-            .map((activity) => (
-              <TableRow key={activity.id}>
-                <TableCell>{activity.name}</TableCell>
-                <TableCell>
-                  {activity.start_date
-                    ? new Date(activity.start_date).toLocaleDateString()
-                    : "-"}
-                </TableCell>
-                <TableCell>{(activity.distance || 0) / 1000}</TableCell>
-                <TableCell>
-                  {activity.average_speed
-                    ? pipe(
-                        activity.average_speed,
-                        meterPerSecondToMinPerKm,
-                        String,
-                        (str) => formatStringNumberWithDecimalPrecision(str, 2),
-                      )
-                    : "-"}
-                </TableCell>
-                <TableCell>
-                  <Checkbox
-                    checked={isActivitySelected(activity.id)}
-                    onChange={(e) => {
-                      mutate({
-                        activityId: activity.id,
-                        selected: e.target.checked,
-                      });
-                    }}
-                  />
-                </TableCell>
-              </TableRow>
-            ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
+    <Grid>
+      {clickedActivityId && (
+        <ActivityStreamDisplay activityId={clickedActivityId} />
+      )}
+      <TableContainer>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Name</TableCell>
+              <TableCell>Date</TableCell>
+              <TableCell>Distance (km)</TableCell>
+              <TableCell>Pace (min / km)</TableCell>
+              <TableCell>Compare</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {activities
+              .filter((activity): activity is { id: number } & Activity =>
+                Boolean(activity.id),
+              )
+              .map((activity) => (
+                <TableRow key={activity.id}>
+                  <TableCell onClick={() => onClickActivity(activity.id)}>
+                    {activity.name}
+                  </TableCell>
+                  <TableCell>
+                    {activity.start_date
+                      ? new Date(activity.start_date).toLocaleDateString()
+                      : "-"}
+                  </TableCell>
+                  <TableCell>{(activity.distance || 0) / 1000}</TableCell>
+                  <TableCell>
+                    {activity.average_speed
+                      ? pipe(
+                          activity.average_speed,
+                          meterPerSecondToMinPerKm,
+                          String,
+                          (str) =>
+                            formatStringNumberWithDecimalPrecision(str, 2),
+                        )
+                      : "-"}
+                  </TableCell>
+                  <TableCell>
+                    <Checkbox
+                      checked={isActivitySelected(activity.id)}
+                      onChange={(e) => {
+                        mutate({
+                          activityId: activity.id,
+                          selected: e.target.checked,
+                        });
+                      }}
+                    />
+                  </TableCell>
+                </TableRow>
+              ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Grid>
   );
 };
 
