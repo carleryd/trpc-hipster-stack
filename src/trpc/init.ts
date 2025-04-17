@@ -24,6 +24,13 @@ export const stravaClient = createClient({
   },
 });
 
+stravaClient.instance.interceptors.response.use((response) => {
+  console.log(`[INCOMING] ${response.status} ${response.statusText}`);
+
+  console.log("[BODY]", response.data);
+  return response;
+});
+
 stravaClient.instance.interceptors.request.use((request) => {
   console.log(
     `[OUTGOING] ${request.method?.toUpperCase()} ${request.baseURL}${request.url}`,

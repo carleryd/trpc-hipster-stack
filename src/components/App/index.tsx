@@ -1,17 +1,18 @@
 "use client";
-import React, { useCallback } from "react";
-import Link from "next/link";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import React from "react";
+import {
+  useMutation,
+  useQueries,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { useTRPC } from "~/trpc/client";
 import type { AppRouterResponses } from "~/trpc/routers/_app";
-import { ChartData } from "chart.js/auto";
 import {
-  Box,
   Button,
   Checkbox,
   CircularProgress,
   Grid,
-  ListItem,
   Table,
   TableBody,
   TableCell,
@@ -30,85 +31,10 @@ import {
 } from "~/utils/dataTransformation";
 import { formatStringNumberWithDecimalPrecision } from "~/utils/formatting";
 import { meterPerSecondToMinPerKm } from "~/utils/math";
+import { zipWith } from "lodash";
 
 type Activity = NonNullable<AppRouterResponses["getActivities"]>[0];
-
-const ActivityItem = ({
-  activity,
-  selected,
-}: {
-  activity: Activity;
-  selected: boolean;
-}) => {
-  const trpc = useTRPC();
-  const queryClient = useQueryClient();
-  const getActivitiesQueryKey = trpc.getSelectedActivityIds.pathKey();
-
-  const { mutate } = useMutation(
-    trpc.setSelectedActivity.mutationOptions({
-      onSuccess: () =>
-        queryClient.invalidateQueries({
-          queryKey: getActivitiesQueryKey,
-        }),
-    }),
-  );
-  // Explicit constant required to get type narrowing into Checkbox onChange
-  const activityId = activity.id;
-
-  if (!activityId) {
-    throw new Error("Activity ID is missing");
-  }
-
-  return (
-    <ListItem>
-      <Box display="flex" flexDirection="row">
-        <Box>
-          <Checkbox
-            defaultChecked={selected}
-            onChange={(e) => {
-              mutate({ activityId, selected: e.target.checked });
-            }}
-          />
-        </Box>
-        <Box>
-          <Typography variant="h6">{activity.name}</Typography>
-          <Typography variant="inherit">
-            Distance: {(activity.distance || 0) / 1000} km
-          </Typography>
-          <Typography variant="inherit">
-            {activity.start_date
-              ? new Date(activity.start_date).toDateString()
-              : "-"}
-          </Typography>
-        </Box>
-      </Box>
-    </ListItem>
-  );
-};
-
-const ListStarredSegments = () => {
-  try {
-    const trpc = useTRPC();
-
-    const { data } = useQuery(trpc.getStarredSegments.queryOptions());
-
-    return (
-      <div>
-        <h3>Starred segments </h3>
-        {data?.map((segment, i) => (
-          <div key={i}>
-            <h4>{segment.name}</h4>
-            <p>{segment.distance}</p>
-            <Link href={`/segment/${segment.id}`}>View</Link>
-          </div>
-        ))}
-      </div>
-    );
-  } catch (e) {
-    console.error("Error fetching starred segments:", e);
-    return null;
-  }
-};
+type ActivityStream = NonNullable<AppRouterResponses["getActivityStream"]>;
 
 const ActivityStreamDisplay = ({ activityId }: { activityId: number }) => {
   const trpc = useTRPC();
@@ -119,35 +45,23 @@ const ActivityStreamDisplay = ({ activityId }: { activityId: number }) => {
     }),
   );
 
+  console.log("### Activity stream", activityStream);
+
   return (
-    <Grid>
-      {isLoading ? (
-        <CircularProgress size={5} />
-      ) : (
-        <>
-          <Typography variant="h6">Activity Stream for {activityId}</Typography>
-          <Typography variant="caption">
-            {Object.keys(activityStream || {})}
-            {activityStream?.distance?.data?.length}
-          </Typography>
-        </>
-      )}
-    </Grid>
+    <Grid>{isLoading ? <CircularProgress size={5} /> : <>Fetched!</>}</Grid>
   );
 };
 
-const ListActivities = ({
-  activities,
+const FetchActivityStreamTableCell = ({
+  activityId,
+  isActivitySelected,
 }: {
-  activities: NonNullable<AppRouterResponses["getActivities"]>;
+  activityId: number;
+  isActivitySelected: boolean;
 }) => {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const getActivitiesQueryKey = trpc.getSelectedActivityIds.pathKey();
-
-  const { data: selectedActivityIds } = useQuery(
-    trpc.getSelectedActivityIds.queryOptions(),
-  );
 
   const { mutate } = useMutation(
     trpc.setSelectedActivity.mutationOptions({
@@ -158,77 +72,101 @@ const ListActivities = ({
     }),
   );
 
-  const isActivitySelected = useCallback(
-    (activityId: number) => selectedActivityIds?.includes(String(activityId)),
-    [selectedActivityIds],
+  return (
+    <TableCell>
+      <Checkbox
+        checked={isActivitySelected}
+        onChange={(e) => {
+          mutate({
+            activityId,
+            selected: e.target.checked,
+          });
+        }}
+      />
+      {isActivitySelected && <ActivityStreamDisplay activityId={activityId} />}
+    </TableCell>
+  );
+};
+
+const ListActivityItem = ({
+  activity,
+  isActivitySelected,
+}: {
+  activity: Activity;
+  isActivitySelected: boolean;
+}) => {
+  return (
+    <TableRow key={activity.id}>
+      <TableCell>{activity.name}</TableCell>
+      <TableCell>
+        {activity.start_date
+          ? new Date(activity.start_date).toLocaleDateString()
+          : "-"}
+      </TableCell>
+      <TableCell>{(activity.distance || 0) / 1000}</TableCell>
+      <TableCell>{activity.average_heartrate || 0}</TableCell>
+      {/** TODO: I think I need to fetch stream data for each activity to get HR zone info,
+                  otherwise can't make good judgement call on whether to include in aggregate */}
+      {/** Show the name and date, then loading spinner as we get the rest */}
+      <TableCell>
+        {activity.average_speed
+          ? pipe(
+              activity.average_speed,
+              meterPerSecondToMinPerKm,
+              String,
+              (str) => formatStringNumberWithDecimalPrecision(str, 2),
+            )
+          : "-"}
+      </TableCell>
+      <FetchActivityStreamTableCell
+        activityId={activity.id}
+        isActivitySelected={isActivitySelected}
+      />
+    </TableRow>
+  );
+};
+
+const ListActivities = () => {
+  const trpc = useTRPC();
+
+  const { data: activities, isLoading } = useQuery(
+    trpc.getActivities.queryOptions(),
   );
 
-  const [clickedActivityId, setClickedActivityId] = React.useState<
-    number | null
-  >(null);
+  const { data: selectedActivityIds } = useQuery(
+    trpc.getSelectedActivityIds.queryOptions(),
+  );
 
-  const onClickActivity = useCallback((activityId: number) => {
-    console.log("### Clicked activity", activityId);
-
-    setClickedActivityId(activityId);
-  }, []);
+  console.log("### ListActivities", activities, selectedActivityIds);
 
   return (
     <Grid>
-      {clickedActivityId && (
-        <ActivityStreamDisplay activityId={clickedActivityId} />
-      )}
       <TableContainer>
+        {isLoading && <CircularProgress />}
         <Table>
           <TableHead>
             <TableRow>
               <TableCell>Name</TableCell>
               <TableCell>Date</TableCell>
               <TableCell>Distance (km)</TableCell>
+              <TableCell>Heart Rate</TableCell>
               <TableCell>Pace (min / km)</TableCell>
               <TableCell>Compare</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {activities
-              .filter((activity): activity is { id: number } & Activity =>
-                Boolean(activity.id),
-              )
-              .map((activity) => (
-                <TableRow key={activity.id}>
-                  <TableCell onClick={() => onClickActivity(activity.id)}>
-                    {activity.name}
-                  </TableCell>
-                  <TableCell>
-                    {activity.start_date
-                      ? new Date(activity.start_date).toLocaleDateString()
-                      : "-"}
-                  </TableCell>
-                  <TableCell>{(activity.distance || 0) / 1000}</TableCell>
-                  <TableCell>
-                    {activity.average_speed
-                      ? pipe(
-                          activity.average_speed,
-                          meterPerSecondToMinPerKm,
-                          String,
-                          (str) =>
-                            formatStringNumberWithDecimalPrecision(str, 2),
-                        )
-                      : "-"}
-                  </TableCell>
-                  <TableCell>
-                    <Checkbox
-                      checked={isActivitySelected(activity.id)}
-                      onChange={(e) => {
-                        mutate({
-                          activityId: activity.id,
-                          selected: e.target.checked,
-                        });
-                      }}
-                    />
-                  </TableCell>
-                </TableRow>
-              ))}
+            {(activities || []).map((activity) => {
+              const isActivitySelected = (selectedActivityIds || []).includes(
+                String(activity.id),
+              );
+
+              return (
+                <ListActivityItem
+                  activity={activity}
+                  isActivitySelected={isActivitySelected}
+                />
+              );
+            })}
           </TableBody>
         </Table>
       </TableContainer>
@@ -243,20 +181,48 @@ const SelectedActivitiesComparison = () => {
     trpc.getSelectedActivityIds.queryOptions(),
   );
 
-  const { data } = useQuery(trpc.getActivities.queryOptions());
+  const { data: activities } = useQuery(trpc.getActivities.queryOptions());
 
-  const activities = (data || []) as ActivityDetailed[];
-
-  const selectedActivities = activities.filter((activity) =>
+  const selectedActivities = (activities || []).filter((activity) =>
     selectedActivityIds?.includes(String(activity.id)),
   );
 
-  const chartData = pipe(
-    selectedActivities,
-    sortByAscDate,
-    withRequiredValues,
-    activities2LineChartData,
+  const activityStreamResults = useQueries({
+    queries: (selectedActivityIds || []).map((activityId) =>
+      trpc.getActivityStream.queryOptions({ activityId: Number(activityId) }),
+    ),
+  });
+
+  const activityStreams = activityStreamResults.map(({ data }) => data);
+
+  const activitiesWithStreamData: {
+    activity: Activity;
+    stream?: ActivityStream;
+  }[] = zipWith(
+    activityStreams,
+    selectedActivities || [],
+    (stream, activity) => {
+      return {
+        activity,
+        stream,
+      };
+    },
   );
+
+  // const activities = (data || []) as ActivityDetailed[];
+
+  // const selectedActivities = activities.filter((activity) =>
+  //   selectedActivityIds?.includes(String(activity.id)),
+  // );
+
+  // const chartData = pipe(
+  //   selectedActivities,
+  //   sortByAscDate,
+  //   withRequiredValues,
+  //   activities2LineChartData,
+  // );
+
+  console.log("### activityStreams", activitiesWithStreamData);
 
   return (
     <Grid>
@@ -268,34 +234,29 @@ const SelectedActivitiesComparison = () => {
       >
         Refresh
       </Button>
-      <Chart chartData={chartData} />
     </Grid>
   );
 };
+// <Chart chartData={chartData} />
 
-export const App = () => {
-  const trpc = useTRPC();
-
-  const { data: activitiesResponse, isLoading } = useQuery(
-    trpc.getActivities.queryOptions(),
-  );
-
-  return (
-    <Grid container display="flex" flexDirection="row">
-      <Grid flex={1}>
-        <Typography variant="h5">Activities</Typography>
-        {isLoading ? (
-          <CircularProgress />
-        ) : activitiesResponse ? (
-          <ListActivities activities={activitiesResponse} />
-        ) : (
-          <Typography variant="h6">No activities found</Typography>
-        )}
-      </Grid>
-      <Grid flex={1}>
-        <Typography variant="h5">Comparison</Typography>
+export const App = () => (
+  <Grid container display="flex" flexDirection="column">
+    <Grid
+      container
+      flex={1}
+      width="100%"
+      justifyContent="center"
+      alignItems="center"
+      flexDirection="column"
+    >
+      <Typography variant="h5">Comparison</Typography>
+      <Grid maxWidth={800}>
         <SelectedActivitiesComparison />
       </Grid>
     </Grid>
-  );
-};
+    <Grid flex={1}>
+      <Typography variant="h5">Activities</Typography>
+      <ListActivities />
+    </Grid>
+  </Grid>
+);

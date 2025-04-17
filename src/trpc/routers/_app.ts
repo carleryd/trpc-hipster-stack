@@ -5,6 +5,7 @@ import {
   getEffortsBySegmentId,
   getLoggedInAthleteActivities,
   getLoggedInAthleteStarredSegments,
+  SummaryActivity,
 } from "~/api/strava";
 import { inferRouterOutputs, TRPCError } from "@trpc/server";
 import {
@@ -16,6 +17,7 @@ import {
 import { z } from "zod";
 import { map } from "lodash";
 import Redis from "ioredis";
+import { zipWith } from "fp-ts/lib/Array";
 
 export type AppRouter = typeof appRouter;
 
@@ -55,11 +57,43 @@ export const appRouter = createTRPCRouter({
         });
       }
 
-      const onlyRunningActivities = data?.filter(
-        (activity) => activity.type === "Run",
-      );
+      try {
+        const activities: SummaryActivity[] = data || [];
 
-      return onlyRunningActivities;
+        console.log("### activiteies", activities);
+
+        const additionalActivityDataSchema = z.object({
+          id: z.number(),
+          average_cadence: z.number().optional(),
+          average_heartrate: z.number(),
+        });
+
+        const enrichedActivities = activities.map((activity) =>
+          additionalActivityDataSchema.parse(activity),
+        );
+
+        const mergedActivities = zipWith(
+          activities,
+          enrichedActivities,
+          (x, y) => ({ ...x, ...y }),
+        );
+
+        console.log("### parsed activities", mergedActivities);
+
+        const onlyRunningActivities = mergedActivities.filter(
+          (activity) => activity.type === "Run",
+        );
+
+        return onlyRunningActivities;
+      } catch (error) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message:
+            error instanceof Error
+              ? error.message
+              : "Unable to parsed additional activity data",
+        });
+      }
     } catch (e) {
       console.error("Error fetching activities:", e);
 
@@ -76,14 +110,14 @@ export const appRouter = createTRPCRouter({
         selected: z.boolean(),
       }),
     )
-    .mutation(async ({ ctx, input: { activityId, selected } }) => {
+    .mutation(async ({ input: { activityId, selected } }) => {
       selectedActivities[activityId] = selected;
 
       console.log("### selectedActivities", selectedActivities);
 
       return selectedActivities;
     }),
-  getSelectedActivityIds: stravaProcedure.query(async ({ ctx }) => {
+  getSelectedActivityIds: stravaProcedure.query(async ({}) => {
     try {
       const x = map(selectedActivities, (value, key) =>
         value ? key : null,
@@ -115,11 +149,11 @@ export const appRouter = createTRPCRouter({
           console.log("### Bearer", ctx.stravaAccessToken);
 
           const activityStreamKeys: GetActivityStreamsData["query"]["keys"] = [
-            "time",
             "distance",
-            "latlng",
-            "altitude",
+            "heartrate",
+            "cadence",
             "velocity_smooth",
+            "altitude",
           ];
 
           const redisKey = `activity:stream:${activityStreamKeys.sort().join(",")}:${activityId}`;
