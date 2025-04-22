@@ -154,6 +154,7 @@ export const appRouter = createTRPCRouter({
             "cadence",
             "velocity_smooth",
             "altitude",
+            "time",
           ];
 
           const redisKey = `activity:stream:${activityStreamKeys.sort().join(",")}:${activityId}`;

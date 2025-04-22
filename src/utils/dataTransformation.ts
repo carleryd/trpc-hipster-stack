@@ -3,6 +3,7 @@ import { zipWith } from "lodash";
 import { AppRouterResponses } from "~/trpc/routers/_app";
 import { RequireKeys } from "~/types/utils";
 import { meterPerSecondToMinPerKm } from "./math";
+import { ActivityWithStream } from "~/components/App";
 
 // TODO: Should this be NonNullable? Also create some tests for the endpoint perhaps? To validate these
 export type ActivityDetailed = NonNullable<
@@ -12,17 +13,19 @@ export type ActivityDetailed = NonNullable<
   average_cadence: number;
 };
 
-export const sortByAscDate = (segmentEfforts: ActivityDetailed[]) =>
-  segmentEfforts
+export const sortByAscDate = (activitiesWithStream: ActivityWithStream[]) =>
+  activitiesWithStream
     .filter(
       (
-        segmentEffort,
-      ): segmentEffort is RequireKeys<ActivityDetailed, "start_date"> =>
-        segmentEffort.start_date !== null,
+        activityWithStream,
+      ): activityWithStream is {
+        activity: RequireKeys<ActivityWithStream["activity"], "start_date">;
+      } & Pick<ActivityWithStream, "stream"> =>
+        activityWithStream.activity.start_date !== null,
     )
     .sort(
-      ({ start_date: sdA }, { start_date: sdB }) =>
-        new Date(sdA).getTime() - new Date(sdB).getTime(),
+      ({ activity: aa }, { activity: ab }) =>
+        new Date(aa.start_date).getTime() - new Date(ab.start_date).getTime(),
     );
 
 export const withRequiredValues = (segmentEfforts: ActivityDetailed[]) =>

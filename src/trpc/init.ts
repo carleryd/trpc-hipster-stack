@@ -110,7 +110,7 @@ export const authOptions: NextAuthConfig = {
       authorization: {
         params: {
           approval_prompt: "auto",
-          scope: "activity:read",
+          scope: "activity:read,profile:read_all",
         },
       },
     }),

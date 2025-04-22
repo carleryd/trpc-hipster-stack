@@ -31,10 +31,18 @@ import {
 } from "~/utils/dataTransformation";
 import { formatStringNumberWithDecimalPrecision } from "~/utils/formatting";
 import { meterPerSecondToMinPerKm } from "~/utils/math";
-import { zipWith } from "lodash";
+import { inRange, range, zipWith, head, tail } from "lodash";
+import { RequireKeys } from "~/types/utils";
+import { z } from "zod";
 
-type Activity = NonNullable<AppRouterResponses["getActivities"]>[0];
-type ActivityStream = NonNullable<AppRouterResponses["getActivityStream"]>;
+export type Activity = NonNullable<AppRouterResponses["getActivities"]>[0];
+export type ActivityStream = NonNullable<
+  AppRouterResponses["getActivityStream"]
+>;
+export type ActivityWithStream = {
+  activity: Activity;
+  stream?: ActivityStream;
+};
 
 const ActivityStreamDisplay = ({ activityId }: { activityId: number }) => {
   const trpc = useTRPC();
@@ -174,6 +182,87 @@ const ListActivities = () => {
   );
 };
 
+const DUMMY_ATHLETE_ZONES_RESPONSE = {
+  heart_rate: {
+    custom_zones: false,
+    zones: [
+      {
+        min: 0,
+        max: 123,
+      },
+      {
+        min: 123,
+        max: 153,
+      },
+      {
+        min: 153,
+        max: 169,
+      },
+      {
+        min: 169,
+        max: 184,
+      },
+      {
+        min: 184,
+        max: -1,
+      },
+    ],
+  },
+};
+
+const zones = DUMMY_ATHLETE_ZONES_RESPONSE.heart_rate.zones;
+
+// TODO: These overlap, but lodash inRange is not inclusive end so it works
+export const HEART_RATE_ZONES = {
+  ZONE_1: {
+    min: zones[0].min,
+    max: zones[0]?.max,
+  },
+  ZONE_2: {
+    min: zones[1].min,
+    max: zones[1]?.max,
+  },
+  ZONE_3: {
+    min: zones[2].min,
+    max: zones[2]?.max,
+  },
+  ZONE_4: {
+    min: zones[3].min,
+    max: zones[3]?.max,
+  },
+  ZONE_5: {
+    min: zones[4].min,
+    max: -1,
+  },
+};
+
+const getZoneForHeartRate = (heartRate: number) => {
+  if (
+    inRange(heartRate, HEART_RATE_ZONES.ZONE_1.min, HEART_RATE_ZONES.ZONE_1.max)
+  ) {
+    return "ZONE_1";
+  } else if (
+    inRange(heartRate, HEART_RATE_ZONES.ZONE_2.min, HEART_RATE_ZONES.ZONE_2.max)
+  ) {
+    return "ZONE_2";
+  } else if (
+    inRange(heartRate, HEART_RATE_ZONES.ZONE_3.min, HEART_RATE_ZONES.ZONE_3.max)
+  ) {
+    return "ZONE_3";
+  } else if (
+    inRange(heartRate, HEART_RATE_ZONES.ZONE_4.min, HEART_RATE_ZONES.ZONE_4.max)
+  ) {
+    return "ZONE_4";
+  } else if (
+    inRange(heartRate, HEART_RATE_ZONES.ZONE_5.min, HEART_RATE_ZONES.ZONE_5.max)
+  ) {
+    return "ZONE_5";
+  } else {
+    // TODO: Handle better somehow
+    throw new Error("Heart rate not in any zone");
+  }
+};
+
 const SelectedActivitiesComparison = () => {
   const trpc = useTRPC();
 
@@ -195,10 +284,7 @@ const SelectedActivitiesComparison = () => {
 
   const activityStreams = activityStreamResults.map(({ data }) => data);
 
-  const activitiesWithStreamData: {
-    activity: Activity;
-    stream?: ActivityStream;
-  }[] = zipWith(
+  const activitiesWithStreamData: ActivityWithStream[] = zipWith(
     activityStreams,
     selectedActivities || [],
     (stream, activity) => {
@@ -209,7 +295,105 @@ const SelectedActivitiesComparison = () => {
     },
   );
 
-  // const activities = (data || []) as ActivityDetailed[];
+  const sorted = sortByAscDate(activitiesWithStreamData);
+  // const withDefinedStream = sorted.filter(
+  //   (
+  //     activityWithStream,
+  //   ): activityWithStream is {
+  //     activity: (typeof activityWithStream)["activity"];
+  //     stream: NonNullable<(typeof activityWithStream)["stream"]> & { stream: { heartrate: { data: number[]} }};
+
+  //   } => Array.isArray(activityWithStream.stream) && Array.isArray(activityWithStream.stream.heartrate?.data),
+  // );
+
+  type ActivityHeartRateZoneData = {
+    zone: "ZONE_1" | "ZONE_2" | "ZONE_3" | "ZONE_4" | "ZONE_5";
+    heartRate: number;
+    distance: number;
+  }[];
+
+  const zoneData: ActivityHeartRateZoneData[] = sorted
+    .map((activity) => {
+      if (
+        activity.stream?.heartrate?.data &&
+        activity.stream?.distance?.data &&
+        activity.stream?.time?.data
+      ) {
+        const heartRateData = activity.stream.heartrate.data;
+        const distanceData = activity.stream.distance.data;
+        const timeData = activity.stream.time.data;
+
+        const heartRateZoneData: ActivityHeartRateZoneData = zipWith(
+          heartRateData,
+          distanceData,
+          timeData,
+          (heartRate, distance, time) => {
+            const zone = getZoneForHeartRate(heartRate);
+
+            return {
+              zone,
+              heartRate,
+              distance,
+              time,
+            };
+          },
+        );
+
+        const headData = head(heartRateZoneData);
+        const tailData = tail(heartRateZoneData);
+
+        // TODO: Also 0-set the time
+        const withModifiedDistance =
+          tailData.length > 0
+            ? tailData.map((zoneData, index) => {
+                const previousData =
+                  index > 0
+                    ? tailData[index - 1]
+                    : (headData as NonNullable<typeof headData>); // If we have tail, we have head!
+
+                return {
+                  ...zoneData,
+                  distance: zoneData.distance - previousData.distance,
+                };
+              })
+            : tailData;
+
+        return withModifiedDistance;
+      } else {
+        return null;
+      }
+    })
+    .filter(
+      (maybeData): maybeData is ActivityHeartRateZoneData => maybeData !== null,
+    );
+
+  /**
+   
+      First we need to filter based on heartrate
+
+      Then we can take distance per second from "distance"
+    
+      If we need velocity - we've got meter per second from this
+
+          {
+        "type": "distance",
+        "data": [
+            141.5,
+            144.0,
+            147.0,
+            150.0,
+            152.5,
+            155.0,
+            158.0,
+            ...
+            ]
+            }
+
+        i.e.  2.5 m/s = 6.6667 min/km
+              3.0 m/s = 5.5556 min/km
+      
+
+    */
 
   // const selectedActivities = activities.filter((activity) =>
   //   selectedActivityIds?.includes(String(activity.id)),
@@ -222,7 +406,7 @@ const SelectedActivitiesComparison = () => {
   //   activities2LineChartData,
   // );
 
-  console.log("### activityStreams", activitiesWithStreamData);
+  console.log("### activity zone data", zoneData);
 
   return (
     <Grid>
