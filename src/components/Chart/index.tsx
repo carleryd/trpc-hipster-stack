@@ -26,64 +26,60 @@ const RenderChart = ({
             mode: "index",
             intersect: false,
           },
-          onClick: (event: ChartEvent, elements: ActiveElement[]) => {
-            const index = elements[0]?.index || 0;
-            const data = chartData.datasets[index];
-          },
           // stacked: false,
-          scales: {
-            yLeft1: {
-              type: "linear",
-              display: true,
-              position: "left",
+          // scales: {
+          //   yLeft1: {
+          //     type: "linear",
+          //     display: true,
+          //     position: "left",
 
-              // grid line settings
-              grid: {
-                drawOnChartArea: false, // only want the grid lines for one axis to show up
-              },
-            },
-            yLeft2: {
-              type: "linear",
-              display: true,
-              position: "left",
+          //     // grid line settings
+          //     grid: {
+          //       drawOnChartArea: false, // only want the grid lines for one axis to show up
+          //     },
+          //   },
+          //   yLeft2: {
+          //     type: "linear",
+          //     display: true,
+          //     position: "left",
 
-              // grid line settings
-              grid: {
-                drawOnChartArea: false, // only want the grid lines for one axis to show up
-              },
-            },
-            yLeft3: {
-              type: "linear",
-              display: true,
-              position: "left",
-              reverse: true,
+          //     // grid line settings
+          //     grid: {
+          //       drawOnChartArea: false, // only want the grid lines for one axis to show up
+          //     },
+          //   },
+          //   yLeft3: {
+          //     type: "linear",
+          //     display: true,
+          //     position: "left",
+          //     reverse: true,
 
-              // grid line settings
-              grid: {
-                drawOnChartArea: false, // only want the grid lines for one axis to show up
-              },
-            },
-            yRight1: {
-              type: "linear",
-              display: true,
-              position: "right",
+          //     // grid line settings
+          //     grid: {
+          //       drawOnChartArea: false, // only want the grid lines for one axis to show up
+          //     },
+          //   },
+          //   yRight1: {
+          //     type: "linear",
+          //     display: true,
+          //     position: "right",
 
-              // grid line settings
-              grid: {
-                drawOnChartArea: false, // only want the grid lines for one axis to show up
-              },
-            },
-            yRight2: {
-              type: "linear",
-              display: true,
-              position: "right",
+          //     // grid line settings
+          //     grid: {
+          //       drawOnChartArea: false, // only want the grid lines for one axis to show up
+          //     },
+          //   },
+          //   yRight2: {
+          //     type: "linear",
+          //     display: true,
+          //     position: "right",
 
-              // grid line settings
-              grid: {
-                drawOnChartArea: false, // only want the grid lines for one axis to show up
-              },
-            },
-          },
+          //     // grid line settings
+          //     grid: {
+          //       drawOnChartArea: false, // only want the grid lines for one axis to show up
+          //     },
+          //   },
+          // },
         },
       });
     }

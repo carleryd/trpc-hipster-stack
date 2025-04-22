@@ -35,10 +35,11 @@ stravaClient.instance.interceptors.request.use((request) => {
   console.log(
     `[OUTGOING] ${request.method?.toUpperCase()} ${request.baseURL}${request.url}`,
   );
+  console.log(`{parameters} ${request.params}`);
   if (request.data instanceof URLSearchParams) {
-    console.log(`[BODY] ${request.data.toString()}`);
+    console.log(`{BODY} ${request.data.toString()}`);
   } else {
-    console.log("[BODY]", request.data);
+    console.log("{BODY}", request.data);
   }
   return request;
 });

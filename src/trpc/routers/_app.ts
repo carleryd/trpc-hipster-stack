@@ -45,6 +45,9 @@ export const appRouter = createTRPCRouter({
 
       const { data, error } = await getLoggedInAthleteActivities({
         client: stravaClient,
+        query: {
+          per_page: 100,
+        },
         headers: {
           Authorization: `Bearer ${ctx.stravaAccessToken}`,
         },
@@ -68,9 +71,9 @@ export const appRouter = createTRPCRouter({
           average_heartrate: z.number(),
         });
 
-        const enrichedActivities = activities.map((activity) =>
-          additionalActivityDataSchema.parse(activity),
-        );
+        const enrichedActivities = activities
+          .map((activity) => additionalActivityDataSchema.safeParse(activity))
+          .filter(({ success }) => success === true);
 
         const mergedActivities = zipWith(
           activities,

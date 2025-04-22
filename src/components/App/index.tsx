@@ -35,6 +35,7 @@ import { inRange, range, zipWith, head, tail } from "lodash";
 import { RequireKeys } from "~/types/utils";
 import { z } from "zod";
 import { accumulateMetadata } from "next/dist/lib/metadata/resolve-metadata";
+import { ChartData } from "chart.js/auto";
 
 export type Activity = NonNullable<AppRouterResponses["getActivities"]>[0];
 export type ActivityStream = NonNullable<
@@ -407,64 +408,53 @@ const SelectedActivitiesComparison = () => {
       (maybeData): maybeData is ActivityHeartRateZoneData => maybeData !== null,
     );
 
-  /**
-   
-      First we need to filter based on heartrate
-
-      Then we can take distance per second from "distance"
-    
-      If we need velocity - we've got meter per second from this
-
-          {
-        "type": "distance",
-        "data": [
-            141.5,
-            144.0,
-            147.0,
-            150.0,
-            152.5,
-            155.0,
-            158.0,
-            ...
-            ]
-            }
-
-        i.e.  2.5 m/s = 6.6667 min/km
-              3.0 m/s = 5.5556 min/km
-      
-
-    */
-
-  // const selectedActivities = activities.filter((activity) =>
-  //   selectedActivityIds?.includes(String(activity.id)),
-  // );
-
-  // const chartData = pipe(
-  //   selectedActivities,
-  //   sortByAscDate,
-  //   withRequiredValues,
-  //   activities2LineChartData,
-  // );
-
   console.log(
     "### zone 1",
     activitiesZoneData.map((zoneData) =>
       getAveragesForZone(zoneData, "ZONE_1"),
     ),
   );
-  console.log(
-    "### zone 2",
-    activitiesZoneData.map((zoneData) =>
-      getAveragesForZone(zoneData, "ZONE_2"),
-    ),
+
+  const zone2Averages = activitiesZoneData.map((zoneData) =>
+    getAveragesForZone(zoneData, "ZONE_2"),
   );
+  const zone3Averages = activitiesZoneData.map((zoneData) =>
+    getAveragesForZone(zoneData, "ZONE_3"),
+  );
+  const zone4Averages = activitiesZoneData.map((zoneData) =>
+    getAveragesForZone(zoneData, "ZONE_4"),
+  );
+
+  console.log("### zone 2", zone2Averages);
+  console.log("### zone 3", zone3Averages);
+  console.log("### zone 4", zone4Averages);
   console.log(
-    "### zone 3",
+    "### zone 5",
     activitiesZoneData.map((zoneData) =>
-      getAveragesForZone(zoneData, "ZONE_3"),
+      getAveragesForZone(zoneData, "ZONE_5"),
     ),
   );
   console.log("### activity zone data", activitiesZoneData);
+
+  const lineChartData: ChartData<"line"> = {
+    labels: sorted.map(({ activity }) =>
+      new Date(activity.start_date).toDateString(),
+    ),
+    datasets: [
+      {
+        label: "Zone 2 speed",
+        data: zone2Averages.map((x) => x.minPerKm),
+      },
+      {
+        label: "Zone 3 speed",
+        data: zone3Averages.map((x) => x.minPerKm),
+      },
+      {
+        label: "Zone 4 speed",
+        data: zone4Averages.map((x) => x.minPerKm),
+      },
+    ],
+  };
 
   return (
     <Grid>
@@ -476,10 +466,10 @@ const SelectedActivitiesComparison = () => {
       >
         Refresh
       </Button>
+      <Chart chartData={lineChartData} />
     </Grid>
   );
 };
-// <Chart chartData={chartData} />
 
 export const App = () => (
   <Grid container display="flex" flexDirection="column">
