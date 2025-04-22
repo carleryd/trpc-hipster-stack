@@ -34,6 +34,7 @@ import { meterPerSecondToMinPerKm } from "~/utils/math";
 import { inRange, range, zipWith, head, tail } from "lodash";
 import { RequireKeys } from "~/types/utils";
 import { z } from "zod";
+import { accumulateMetadata } from "next/dist/lib/metadata/resolve-metadata";
 
 export type Activity = NonNullable<AppRouterResponses["getActivities"]>[0];
 export type ActivityStream = NonNullable<
@@ -43,6 +44,15 @@ export type ActivityWithStream = {
   activity: Activity;
   stream?: ActivityStream;
 };
+
+type HeartRateZone = "ZONE_1" | "ZONE_2" | "ZONE_3" | "ZONE_4" | "ZONE_5";
+
+type ActivityHeartRateZoneData = {
+  zone: HeartRateZone;
+  heartRate: number;
+  distance: number;
+  time: number;
+}[];
 
 const ActivityStreamDisplay = ({ activityId }: { activityId: number }) => {
   const trpc = useTRPC();
@@ -58,6 +68,38 @@ const ActivityStreamDisplay = ({ activityId }: { activityId: number }) => {
   return (
     <Grid>{isLoading ? <CircularProgress size={5} /> : <>Fetched!</>}</Grid>
   );
+};
+
+type ZoneAverages = {
+  minPerKm: number;
+  heartRate: number;
+  time: number;
+};
+const getAveragesForZone = (
+  list: ActivityHeartRateZoneData,
+  zone: HeartRateZone,
+): ZoneAverages => {
+  const { distance, heartRateSum, time } = list
+    .filter((zoneData) => zoneData.zone === zone)
+    .reduce(
+      (acc, zoneData) => ({
+        distance: acc.distance + zoneData.distance,
+        heartRateSum: acc.heartRateSum + zoneData.heartRate,
+        time: acc.time + 1,
+      }),
+      { distance: 0, heartRateSum: 0, time: 0 },
+    );
+
+  const meters = distance;
+  const averageHeartRate = heartRateSum / time;
+  const metersPerSecond = meters / time;
+  const minPerKm = meterPerSecondToMinPerKm(metersPerSecond);
+
+  return {
+    minPerKm,
+    heartRate: averageHeartRate,
+    time,
+  };
 };
 
 const FetchActivityStreamTableCell = ({
@@ -163,13 +205,14 @@ const ListActivities = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {(activities || []).map((activity) => {
+            {(activities || []).map((activity, index) => {
               const isActivitySelected = (selectedActivityIds || []).includes(
                 String(activity.id),
               );
 
               return (
                 <ListActivityItem
+                  key={index}
                   activity={activity}
                   isActivitySelected={isActivitySelected}
                 />
@@ -232,7 +275,7 @@ export const HEART_RATE_ZONES = {
   },
   ZONE_5: {
     min: zones[4].min,
-    max: -1,
+    max: Number.MAX_SAFE_INTEGER,
   },
 };
 
@@ -306,13 +349,7 @@ const SelectedActivitiesComparison = () => {
   //   } => Array.isArray(activityWithStream.stream) && Array.isArray(activityWithStream.stream.heartrate?.data),
   // );
 
-  type ActivityHeartRateZoneData = {
-    zone: "ZONE_1" | "ZONE_2" | "ZONE_3" | "ZONE_4" | "ZONE_5";
-    heartRate: number;
-    distance: number;
-  }[];
-
-  const zoneData: ActivityHeartRateZoneData[] = sorted
+  const activitiesZoneData: ActivityHeartRateZoneData[] = sorted
     .map((activity) => {
       if (
         activity.stream?.heartrate?.data &&
@@ -343,7 +380,7 @@ const SelectedActivitiesComparison = () => {
         const tailData = tail(heartRateZoneData);
 
         // TODO: Also 0-set the time
-        const withModifiedDistance =
+        const adjustedZoneData =
           tailData.length > 0
             ? tailData.map((zoneData, index) => {
                 const previousData =
@@ -354,11 +391,14 @@ const SelectedActivitiesComparison = () => {
                 return {
                   ...zoneData,
                   distance: zoneData.distance - previousData.distance,
+                  time:
+                    zoneData.time -
+                    (headData as NonNullable<typeof headData>).time,
                 };
               })
             : tailData;
 
-        return withModifiedDistance;
+        return adjustedZoneData;
       } else {
         return null;
       }
@@ -406,7 +446,25 @@ const SelectedActivitiesComparison = () => {
   //   activities2LineChartData,
   // );
 
-  console.log("### activity zone data", zoneData);
+  console.log(
+    "### zone 1",
+    activitiesZoneData.map((zoneData) =>
+      getAveragesForZone(zoneData, "ZONE_1"),
+    ),
+  );
+  console.log(
+    "### zone 2",
+    activitiesZoneData.map((zoneData) =>
+      getAveragesForZone(zoneData, "ZONE_2"),
+    ),
+  );
+  console.log(
+    "### zone 3",
+    activitiesZoneData.map((zoneData) =>
+      getAveragesForZone(zoneData, "ZONE_3"),
+    ),
+  );
+  console.log("### activity zone data", activitiesZoneData);
 
   return (
     <Grid>
