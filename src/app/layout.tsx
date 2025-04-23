@@ -20,6 +20,7 @@ export default async function RootLayout({
 }>) {
   return (
     <html lang="en" className={roboto.variable}>
+      <title>My Stride</title>
       <body>
         <AppRouterCacheProvider>
           <ThemeProvider theme={theme}>
