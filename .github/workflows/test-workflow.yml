@@ -30,6 +30,7 @@ jobs:
         run: |
           # Run your Node script and capture output
           OUTPUT=$(optic diff oas-schema-1.yml oas-schema-2.yml)
+          echo $OUTPUT
           echo "output=$OUTPUT" >> $GITHUB_OUTPUT
 
       - name: Output OAS Analysis
