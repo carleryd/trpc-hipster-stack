@@ -24,4 +24,4 @@ jobs:
         with:
           node-version: "20"
       - run: npm install -g @useoptic/optic
-      - run: optic -v
+      - run: optic --version
