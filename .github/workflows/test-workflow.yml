@@ -7,21 +7,28 @@ on:
 
 jobs:
   oas-analysis:
-    timeout-minutes: 10
-    runs-on:
-      ubuntu-latest
-      # labels:
-      #   - runs-on
-      #   - runner=standard
-      #   - spot=true
-      #   - ssh=true
-      #   - run-id=${{ github.run_id }}
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3.5.2
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 2
+
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
+          cache: "pnpm"
+          cache-dependency-path: "**/pnpm-lock.yaml"
+
       - run: npm install -g @useoptic/optic
-      - run: optic --version
+
+      - name: Run OAS Analysis
+        id: run_oas_analysis
+        run: |
+          # Run your Node script and capture output
+          OUTPUT=$(optic diff oas-schema-1.yml oas-schema-2.yml)
+          echo "output=$OUTPUT" >> $GITHUB_OUTPUT
+
+      - name: Output OAS Analysis
+        run: |
+          echo ${{ steps.run_oas_analysis.outputs.output }}
