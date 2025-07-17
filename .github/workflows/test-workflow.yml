@@ -21,9 +21,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "24.4.1"
+          cache: "pnpm"
+          cache-dependency-path: "**/pnpm-lock.yaml"
 
       - name: 📥 Install Optic
-        run: npm install -g @useoptic/optic
+        run: pnpm install -g @useoptic/optic
 
       - name: Run OAS Analysis
         id: run_oas_analysis
