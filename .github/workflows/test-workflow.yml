@@ -30,10 +30,15 @@ jobs:
       - name: Run OAS analysis
         id: run_oas_analysis
         run: |
-          echo "oas_analysis=$(optic diff oas-schema-1.yml --base HEAD~1)" >> "$GITHUB_OUTPUT"
+          OUTPUT=$(optic diff oas-schema-1.yml --base HEAD~1 2>&1)
+          {
+            echo 'oas_analysis<<EOF'
+            echo "$OUTPUT"
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
 
       - name: Output OAS Analysis
         env:
-          OAS_ANALYSIS: ${{ steps.run_oas_analysis.outputs.oas_analysis }}
+          oas_analysis: ${{ steps.run_oas_analysis.outputs.oas_analysis }}
         run: |
-          echo "The output is $OAS_ANALYSIS"
+          echo "The output is $oas_analysis"
