@@ -30,7 +30,7 @@ jobs:
       - name: Run OAS analysis
         id: run_oas_analysis
         run: |
-          OUTPUT=$(optic diff oas-schema-1.yml --base HEAD~1 2>&1)
+          OUTPUT=$(optic diff oas-schema-1.yml --base 9e5ff2d1 2>&1)
           {
             echo 'oas_analysis<<EOF'
             echo "$OUTPUT"
