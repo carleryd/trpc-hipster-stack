@@ -21,8 +21,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "24.4.1"
-          cache: "pnpm"
-          cache-dependency-path: "**/pnpm-lock.yaml"
+          # cache: "pnpm"
+          # cache-dependency-path: "**/pnpm-lock.yaml"
 
       - name: 📥 Install Optic
         run: pnpm install -g @useoptic/optic
