@@ -1,0 +1,27 @@
+name: OpenAPI schema breaking changes analysis
+
+on:
+  push:
+    branches:
+      - "main"
+
+jobs:
+  oas-analysis:
+    timeout-minutes: 10
+    runs-on:
+      ubuntu-latest
+      # labels:
+      #   - runs-on
+      #   - runner=standard
+      #   - spot=true
+      #   - ssh=true
+      #   - run-id=${{ github.run_id }}
+    steps:
+      - uses: actions/checkout@v3.5.2
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm install -g @useoptic/optic
+      - run: optic -v
