@@ -31,14 +31,17 @@ jobs:
         id: run_oas_analysis
         run: |
           OUTPUT=$(optic diff oas-schema-1.yml --base 9e5ff2d1 2>&1)
-          {
-            echo 'oas_analysis<<EOF'
-            echo "$OUTPUT"
-            echo 'EOF'
-          } >> "$GITHUB_OUTPUT"
+          ENCODED=$(echo "$OUTPUT" | base64 -w 0)
+          echo "encoded_oas_analysis=$ENCODED" >> "$GITHUB_OUTPUT"
+          # OUTPUT=$(optic diff oas-schema-1.yml --base 9e5ff2d1 2>&1)
+          # {
+          #   echo 'oas_analysis<<EOF'
+          #   echo "$OUTPUT"
+          #   echo 'EOF'
+          # } >> "$GITHUB_OUTPUT"
 
       - name: Output OAS Analysis
         env:
-          oas_analysis: ${{ steps.run_oas_analysis.outputs.oas_analysis }}
+          encoded_oas_analysis: ${{ steps.run_oas_analysis.outputs.encoded_oas_analysis }}
         run: |
-          echo "The output is $oas_analysis"
+          echo "The output is $encoded_oas_analysis" | base64 -d
