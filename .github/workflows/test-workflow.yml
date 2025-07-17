@@ -35,4 +35,4 @@ jobs:
 
       - name: Output OAS Analysis
         run: |
-          echo ${{ steps.run_oas_analysis.outputs.output }}
+          echo "${{ steps.run_oas_analysis.outputs.output }}"
