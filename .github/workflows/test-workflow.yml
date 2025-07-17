@@ -14,13 +14,18 @@ jobs:
         with:
           fetch-depth: 2
 
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 8
+
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "20.9.0"
           cache: "pnpm"
           cache-dependency-path: "**/pnpm-lock.yaml"
 
-      - run: npm install -g @useoptic/optic
+      - name: 📥 Install Optic
+        run: npm install -g @useoptic/optic
 
       - name: Run OAS Analysis
         id: run_oas_analysis
