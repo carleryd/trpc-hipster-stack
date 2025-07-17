@@ -1,0 +1,22 @@
+services:
+  api-server:
+    build: . # Runs Dockerfile defined for working_dir
+    ports:
+      - "3000:3000"
+      - "9229:9229"
+      - "9230:9230"
+    volumes:
+      - .:/app
+      - /app/node_modules # Mount empty volume to prevent overrides
+    working_dir: /app
+    environment:
+      - VALKEY_HOST=valkey-db
+    command: bash -c "npm run build && npm run start"
+    depends_on:
+      - valkey-db
+
+  valkey-db:
+    image: valkey/valkey:latest
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
