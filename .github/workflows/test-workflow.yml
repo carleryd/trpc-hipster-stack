@@ -27,10 +27,10 @@ jobs:
       - name: 📥 Install Optic
         run: pnpm install -g @useoptic/optic
 
-      - name: Run OAS Analysis
+      - name: Run OAS analysis
         id: run_oas_analysis
         run: |
-          OUTPUT=$(optic diff oas-schema-1.yml oas-schema-2.yml)
+          OUTPUT=$(optic diff oas-schema-1.yml --base HEAD~1)
           echo "output<<EOF" >> $GITHUB_OUTPUT
           echo "$OUTPUT" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
