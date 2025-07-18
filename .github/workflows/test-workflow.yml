@@ -25,17 +25,25 @@ jobs:
           # cache-dependency-path: "**/pnpm-lock.yaml"
 
       - name: 📥 Install Optic
-        run: pnpm install -g @useoptic/optic
+        run:
+          pnpm install -g @useoptic/optic
+
+          # OUTPUT=$(optic diff oas-schema-1.yml --base 9e5ff2d1 2>&1)
+          # ENCODED=$(echo "$OUTPUT" | base64 -w 0)
+          # echo "encoded_oas_analysis=$ENCODED" >> "$GITHUB_OUTPUT"
 
       - name: Run OAS analysis
         id: run_oas_analysis
         run: |
           OUTPUT=$(optic diff oas-schema-1.yml --base 9e5ff2d1 2>&1)
-          ENCODED=$(echo "$OUTPUT" | base64 -w 0)
-          echo "encoded_oas_analysis=$ENCODED" >> "$GITHUB_OUTPUT"
+          {
+            echo 'oas_analysis<<EOF'
+            echo "$OUTPUT"
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
 
       - name: Output OAS Analysis
         env:
-          encoded_oas_analysis: ${{ steps.run_oas_analysis.outputs.encoded_oas_analysis }}
+          oas_analysis: ${{ steps.run_oas_analysis.outputs.oas_analysis }}
         run: |
-          echo "$encoded_oas_analysis" | base64 -d
+          echo "$oas_analysis"
